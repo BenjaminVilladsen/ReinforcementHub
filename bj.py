@@ -5,7 +5,7 @@ import random
 class BlackjackGame:
     def __init__(self, state):
         self.deck = self.create_deck()
-        self.player_hand = self.create_hand_player(state[0],12, state[2])
+        self.player_hand = self.create_hand_player(state[0], 12, state[2])
         self.dealer_hand = self.create_hand_dealer(state[1], 1)
         self.game_over = False
 
@@ -78,7 +78,7 @@ class BlackjackGame:
 
     def create_hand_player(self, value, value_offset, usable_ace=False):
         value += value_offset
-        #Generate one random card
+        # Generate one random card
         suits = ['Hearts', 'Diamonds', 'Clubs', 'Spades']
         values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'Jack', 'Queen', 'King', 'Ace']
         if not usable_ace:
@@ -102,7 +102,7 @@ class BlackjackGame:
 
     def create_hand_dealer(self, value, value_offset):
         value += value_offset
-        #Generate one random card
+        # Generate one random card
         suits = ['Hearts', 'Diamonds', 'Clubs', 'Spades']
         values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'Jack', 'Queen', 'King', 'Ace']
         card2 = {'suit': random.choice(suits), 'value': random.choice(values)}
@@ -111,3 +111,17 @@ class BlackjackGame:
             if (self.card_value(card) == value) or (value == 1 and self.card_value(card) == 11):
                 print(card, card2)
                 return [card, card2]
+
+    def get_winner(self):
+        player_total = self.total_hand(self.player_hand)
+        dealer_total = self.total_hand(self.dealer_hand)
+        if player_total > 21:
+            return -1
+        elif dealer_total > 21:
+            return 1
+        elif player_total > dealer_total:
+            return 1
+        elif player_total < dealer_total:
+            return -1
+        else:
+            return 0

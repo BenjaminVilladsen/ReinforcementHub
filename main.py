@@ -34,15 +34,22 @@ def get_random_state():
 def get_action(state):
     return pi[state]
 
+
+
 if __name__ == "__main__":
-    for _ in range(10):
+    for _ in range(1):
         random_state = get_random_state()
+        random_state = (8, 1, 0)
         print(random_state)
         game = BlackjackGame(random_state)
+        G = 0
         while not game.game_over:
             action = get_action(random_state)
             if action == 1:
                 game.hit("player")
             else:
                 game.stand()
+        print(game.player_hand)
+        print(game.dealer_hand)
+        print(game.get_game_state())
 
