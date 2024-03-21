@@ -52,9 +52,10 @@ class BlackjackGame:
         self.game_over = True
 
     def start_game(self):
-        """Start a new game by dealing two cards to each player."""
-        self.player_hand = [self.deck.pop(), self.deck.pop()]
-        self.dealer_hand = [self.deck.pop(), self.deck.pop()]
+        """Start a new game using the initial hands if provided, otherwise deal new cards."""
+        if not self.player_hand or not self.dealer_hand:
+            self.player_hand = [self.deck.pop(), self.deck.pop()]
+            self.dealer_hand = [self.deck.pop(), self.deck.pop()]
 
     def has_usable_ace(self, hand):
         """Check if the hand has a usable Ace."""
