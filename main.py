@@ -1,15 +1,48 @@
-#pip install swig
-#pip install gymnasium[all]
+from bj import BlackjackGame
+import numpy as np
 
-import gymnasium as gym
-env = gym.make("LunarLander-v2", render_mode="human")
-observation, info = env.reset(seed=42)
-for _ in range(1000):
-   #action = env.action_space.sample()  # this is where you would insert your policy
-   action = 2
-   observation, reward, terminated, truncated, info = env.step(action)
+###Convention: 1 is hit, 0 is stand
 
-   if terminated or truncated:
-      observation, info = env.reset()
+#Policy PI
+pi = np.zeros((10, 10, 2), dtype=int)
 
-env.close()
+#X axis is the player's sum
+for i in range(12, 22):
+    #Y axis is the dealer's card
+    for j in range(1, 11):
+        #Z axis is the usable ace
+        for k in range(2):
+            #If the player's sum is less than 20, the policy is to hit
+            if i < 20:
+                pi[i-12, j-1, k] = 1
+            #If the player's sum is greater than 20, the policy is to stand
+            else:
+                pi[i-12, j-1, k] = 0
+
+#Action value function Q for all states and actions
+Q = np.zeros((10, 10, 2, 2))
+
+#Returns list
+returns = np.zeros((10, 10, 2, 2))
+
+def get_random_state():
+    player_sum = np.random.randint(0, 10)
+    dealer_card = np.random.randint(0, 10)
+    usable_ace = np.random.randint(2)
+    return player_sum, dealer_card, usable_ace
+
+def get_action(state):
+    return pi[state]
+
+if __name__ == "__main__":
+    for _ in range(10):
+        random_state = get_random_state()
+        print(random_state)
+        game = BlackjackGame(random_state)
+        while not game.game_over:
+            action = get_action(random_state)
+            if action == 1:
+                game.hit("player")
+            else:
+                game.stand()
+

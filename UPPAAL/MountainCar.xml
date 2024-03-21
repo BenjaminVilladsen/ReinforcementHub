@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.6//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_6.dtd'>
+<nta>
+	<declaration>broadcast chan left, right, free;
+clock time;</declaration>
+	<template>
+		<name x="5" y="5">Agent</name>
+		<declaration>clock t;</declaration>
+		<location id="id0" x="-68" y="272">
+			<name x="-85" y="238">W</name>
+			<label kind="invariant" x="-68" y="289">t&lt;=0.02</label>
+			<label kind="exponentialrate" x="-93" y="289">1</label>
+		</location>
+		<location id="id1" x="297" y="272">
+			<name x="314" y="263">Move</name>
+			<committed/>
+		</location>
+		<init ref="id0"/>
+		<transition id="id2">
+			<source ref="id1"/>
+			<target ref="id0"/>
+			<label kind="synchronisation" x="110" y="51">free!</label>
+			<nail x="340" y="229"/>
+			<nail x="340" y="153"/>
+			<nail x="127" y="42"/>
+			<nail x="-119" y="170"/>
+			<nail x="-119" y="246"/>
+		</transition>
+		<transition id="id3">
+			<source ref="id1"/>
+			<target ref="id0"/>
+			<label kind="synchronisation" x="93" y="119">right!</label>
+			<nail x="297" y="212"/>
+			<nail x="119" y="110"/>
+			<nail x="-68" y="212"/>
+		</transition>
+		<transition id="id4">
+			<source ref="id1"/>
+			<target ref="id0"/>
+			<label kind="synchronisation" x="93" y="195">left!</label>
+			<nail x="119" y="178"/>
+		</transition>
+		<transition id="id5" controllable="false">
+			<source ref="id0"/>
+			<target ref="id1"/>
+			<label kind="guard" x="34" y="289">t==0.02</label>
+			<label kind="assignment" x="102" y="289">t=0.0</label>
+		</transition>
+	</template>
+	<template>
+		<name>MountainCar</name>
+		<declaration>///Number of wins
+int num_of_wins;
+
+///Number of deaths
+int num_of_deaths;
+
+///GForce applied to car
+double force = 0;
+
+
+///Constants
+const double force_mag = 0.001;
+const double gravity = 0.0025;
+
+
+///Thresholds
+const double car_pos_min = -1.2;
+const double car_pos_max = 0.6;
+const double car_vel_min = -0.07;
+const double car_vel_max = 0.07;
+
+///Goal pos
+const double goal_pos = 0.5;
+
+
+/// Position of car on the x-axis and velocity
+clock car_pos, car_vel;
+
+double velocity() {
+    return car_vel + force - cos(3 * car_pos) * gravity;
+}
+
+double position() {
+    return car_pos + velocity();
+}</declaration>
+		<location id="id6" x="-42" y="110">
+			<name x="-93" y="76">Init</name>
+			<urgent/>
+		</location>
+		<location id="id7" x="-42" y="-85">
+			<name x="-110" y="-76">Alive</name>
+		</location>
+		<location id="id8" x="-42" y="-255">
+			<name x="-25" y="-246">IsDead</name>
+			<committed/>
+		</location>
+		<location id="id9" x="-42" y="-467">
+			<name x="-52" y="-501">Terminated</name>
+			<committed/>
+		</location>
+		<init ref="id6"/>
+		<transition id="id10" controllable="false">
+			<source ref="id9"/>
+			<target ref="id6"/>
+			<nail x="-442" y="-467"/>
+			<nail x="-433" y="187"/>
+			<nail x="-127" y="187"/>
+		</transition>
+		<transition id="id11" controllable="false">
+			<source ref="id8"/>
+			<target ref="id9"/>
+			<label kind="guard" x="135" y="-433">car_pos&lt;goal_pos</label>
+			<nail x="101" y="-314"/>
+			<nail x="93" y="-433"/>
+		</transition>
+		<transition id="id12" controllable="false">
+			<source ref="id8"/>
+			<target ref="id9"/>
+			<label kind="guard" x="-340" y="-408">car_pos&gt;=goal_pos</label>
+			<label kind="assignment" x="-323" y="-391">num_of_wins++</label>
+			<nail x="-187" y="-331"/>
+			<nail x="-187" y="-433"/>
+		</transition>
+		<transition id="id13" controllable="false">
+			<source ref="id8"/>
+			<target ref="id7"/>
+			<label kind="guard" x="51" y="-204">car_pos &gt;= car_pos_min &amp;&amp;
+car_pos &lt;= car_pos_max &amp;&amp;
+car_vel &gt;= car_vel_min &amp;&amp;
+car_vel &lt;= car_vel_max</label>
+			<nail x="42" y="-255"/>
+			<nail x="42" y="-85"/>
+		</transition>
+		<transition id="id14">
+			<source ref="id7"/>
+			<target ref="id8"/>
+			<label kind="synchronisation" x="-306" y="-187">left?</label>
+			<label kind="assignment" x="-323" y="-170">force = -1</label>
+			<nail x="-280" y="-85"/>
+			<nail x="-280" y="-255"/>
+		</transition>
+		<transition id="id15">
+			<source ref="id7"/>
+			<target ref="id8"/>
+			<label kind="synchronisation" x="-187" y="-187">right?</label>
+			<label kind="assignment" x="-195" y="-170">force = 1</label>
+			<nail x="-161" y="-110"/>
+			<nail x="-161" y="-221"/>
+		</transition>
+		<transition id="id16">
+			<source ref="id7"/>
+			<target ref="id8"/>
+			<label kind="synchronisation" x="-59" y="-187">free?</label>
+			<label kind="assignment" x="-68" y="-170">force = 0</label>
+		</transition>
+		<transition id="id17" controllable="false">
+			<source ref="id6"/>
+			<target ref="id7"/>
+			<label kind="assignment" x="-34" y="127">car_pos = -0.5, car_vel = 0</label>
+		</transition>
+	</template>
+	<system>system Agent, MountainCar;</system>
+	<queries>
+		<query>
+			<formula/>
+			<comment/>
+		</query>
+	</queries>
+</nta>
