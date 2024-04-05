@@ -4,10 +4,15 @@ from collections import deque
 
 # Parameters
 alpha = 0.1  # Learning rate
-gamma = 0.01  # Discount factor
-epsilon = 0.8  # Epsilon for the ε-greedy policy
-n = 6  # Number of steps
+gamma = 0.5  # Discount factor
+
+n = 3  # Number of steps
 n_bins = 10  # Number of bins per state dimension
+
+epsilon_start = 1.0
+epsilon_decay = 0.99
+epsilon_min = 0.01
+epsilon = epsilon_start
 
 n_episodes = 6000
 
@@ -69,7 +74,7 @@ episode_lengths = []
 
 # n step sarsas
 for i_episode in range(n_episodes):  # Number of episodes
-
+    epsilon = max(epsilon * epsilon_decay, epsilon_min)
     #episode stats
     total_reward = 0
     steps = 0
