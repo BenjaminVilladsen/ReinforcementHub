@@ -4,11 +4,14 @@ import time
 import gymnasium as gym
 import numpy as np
 from collections import deque
+from playsound import playsound
+# Play the sound
 
 # Hyperparameters ranges
 alpha_values = [0.5, 0.1, 0.05]
 gamma_values = [0.5, 0.9, 0.99]
 epsilon_decay_values = [0.5, 1, 0.9]
+
 
 # Initialize best score
 best_score = -float('inf')
@@ -19,7 +22,7 @@ n = 10  # Number of steps
 n_bins = 10  # Number of bins per state dimension
 
 
-n_episodes = 5_000
+n_episodes = 5000
 
 # Environment setup
 env = gym.make("LunarLander-v2",
@@ -204,7 +207,7 @@ hyperparameters = {
 }
 
 storePolicyAndHyperparamsInFile(fileName, best_Q, best_hyperparameters)
-
+playsound('sound.mp3')
 
 # ---------------------------------------------------
 # -----------------SIMULATION------------------------
