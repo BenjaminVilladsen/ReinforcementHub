@@ -5,19 +5,21 @@ import gymnasium as gym
 import numpy as np
 from collections import deque
 
-# Parameters
-alpha = 0.1  # Learning rate
-gamma = 0.5  # Discount factor
+# Hyperparameters ranges
+alpha_values = [0.5, 0.1, 0.05]
+gamma_values = [0.5, 0.9, 0.99]
+epsilon_decay_values = [0.5, 1, 0.9]
 
-n = 3  # Number of steps
+# Initialize best score
+best_score = -float('inf')
+best_hyperparameters = None
+best_Q = None
+
+n = 10  # Number of steps
 n_bins = 10  # Number of bins per state dimension
 
-epsilon_start = 1.0
-epsilon_decay = 0.99
-epsilon_min = 0.01
-epsilon = epsilon_start
 
-n_episodes = 10_000
+n_episodes = 5_000
 
 # Environment setup
 env = gym.make("LunarLander-v2",
@@ -116,54 +118,73 @@ episode_lengths = []
 # n step sarsas
 best_reward = -99999
 
-if (shouldLoadFromFile != "yes"):
-    for i_episode in range(n_episodes):  # Number of episodes
-        epsilon = max(epsilon * epsilon_decay, epsilon_min)
-        #episode stats
-        total_reward = 0
-        steps = 0
+for alpha in alpha_values:
+    for gamma in gamma_values:
+        for epsilon_decay in epsilon_decay_values:
+            print(f"Running for alpha={alpha}, gamma={gamma}, epsilon_decay={epsilon_decay}")
+            epsilon_start = 1.0
+            epsilon_min = 0.01
+            epsilon = epsilon_start
 
-        observation, info = env.reset()
-        state = discretize(observation, n_bins, state_bounds)
-        action = epsilon_greedy_policy(state, Q, epsilon)
-        state_action_reward = deque(maxlen=n + 1)
+            if (shouldLoadFromFile != "yes"):
+                for i_episode in range(n_episodes):  # Number of episodes
+                    epsilon = max(epsilon * epsilon_decay, epsilon_min)
+                    #episode stats
+                    total_reward = 0
+                    steps = 0
+                    best_reward = 0
 
-        action_avg_reward = 0
+                    observation, info = env.reset()
+                    state = discretize(observation, n_bins, state_bounds)
+                    action = epsilon_greedy_policy(state, Q, epsilon)
+                    state_action_reward = deque(maxlen=n + 1)
 
-        while True:
-            observation, reward, done, truncated, info = env.step(action)
-            total_reward += reward
-            steps += 1
+                    action_avg_reward = 0
 
-            next_state = discretize(observation, n_bins, state_bounds)
-            next_action = epsilon_greedy_policy(next_state, Q, epsilon)
-            state_action_reward.append((state, action, reward))
+                    while True:
+                        observation, reward, done, truncated, info = env.step(action)
+                        total_reward += reward
+                        best_reward = max(best_reward, reward)
+                        steps += 1
 
-            if len(state_action_reward) >= n + 1:
-                state_to_update, action_to_update, _ = state_action_reward[0]
-                G = sum([gamma ** i * r for i, (_, _, r) in enumerate(state_action_reward)])
-                if not done and not truncated:
-                    G += gamma ** n * Q[next_state][next_action]
-                Q = update_Q(Q, state_to_update, action_to_update, G, next_state, next_action, alpha, gamma)
+                        next_state = discretize(observation, n_bins, state_bounds)
+                        next_action = epsilon_greedy_policy(next_state, Q, epsilon)
+                        state_action_reward.append((state, action, reward))
 
-            if done or truncated:
-                break
-            state = next_state
-            action = next_action
+                        if len(state_action_reward) >= n + 1:
+                            state_to_update, action_to_update, _ = state_action_reward[0]
+                            G = sum([gamma ** i * r for i, (_, _, r) in enumerate(state_action_reward)])
+                            if not done and not truncated:
+                                G += gamma ** n * Q[next_state][next_action]
+                            Q = update_Q(Q, state_to_update, action_to_update, G, next_state, next_action, alpha, gamma)
 
-        episode_rewards.append(total_reward)
-        episode_lengths.append(steps)
-        if np.mean(episode_rewards[-(n_episodes // 10):]) > best_reward:
-            best_reward = np.mean(episode_rewards[-(n_episodes // 10):])
+                        if done or truncated:
+                            break
+                        state = next_state
+                        action = next_action
 
-        #print stats
-        if (i_episode + 1) % (n_episodes // 10) == 0:
-            print(f"Episode: {i_episode + 1}, "
-                  f"Average Reward: {np.mean(episode_rewards[-(n_episodes // 10):]):.2f}, "
-                  f"Average Length: {np.mean(episode_lengths[-(n_episodes // 10):]):.2f}, "
-                  f"Total Reward: {sum(episode_rewards[-(n_episodes // 10):]):.2f}")
+                    episode_rewards.append(total_reward)
+                    episode_lengths.append(steps)
+                    if np.mean(episode_rewards[-(n_episodes // 10):]) > best_reward:
+                        best_reward = np.mean(episode_rewards[-(n_episodes // 10):])
 
-    env.close()
+                    #print stats
+                    if (i_episode + 1) % (n_episodes // 10) == 0:
+                        print(f"Episode: {i_episode + 1}, "
+                              f"Average Reward: {np.mean(episode_rewards[-(n_episodes // 10):]):.2f}, "
+                              f"Average Length: {np.mean(episode_lengths[-(n_episodes // 10):]):.2f}, "
+                              f"Total Reward: {sum(episode_rewards[-(n_episodes // 10):]):.2f}")
+                        print(f"Best Reward: {best_reward:.2f}")
+
+
+                env.close()
+                current_score = np.mean(episode_rewards[-100:])
+
+                # Update best score and hyperparameters if current model is better
+                if current_score > best_score:
+                    best_score = current_score
+                    best_hyperparameters = {'alpha': alpha, 'gamma': gamma, 'epsilon_decay': epsilon_decay}
+                    best_Q = Q.copy()  # Make sure to copy the Q-table, not just reference it
 
 #file name with best cost in policy and time and date
 #current time
@@ -182,7 +203,7 @@ hyperparameters = {
     'n_episodes': n_episodes
 }
 
-storePolicyAndHyperparamsInFile(fileName, Q, hyperparameters)
+storePolicyAndHyperparamsInFile(fileName, best_Q, best_hyperparameters)
 
 
 # ---------------------------------------------------
