@@ -17,7 +17,7 @@ epsilon_decay = 0.99
 epsilon_min = 0.01
 epsilon = epsilon_start
 
-n_episodes = 1000
+n_episodes = 10_000
 
 # Environment setup
 env = gym.make("LunarLander-v2",
@@ -64,6 +64,7 @@ if shouldLoadFromFile.lower() == "yes":
     hyperparameters = loaded['hyperparameters']
     Q = loaded['Q_table']
 
+run_simulation = input("Do you want to run the simulation? (yes/no): ")
 
 
 # Discretization function
@@ -167,7 +168,7 @@ if (shouldLoadFromFile != "yes"):
 #file name with best cost in policy and time and date
 #current time
 currentTimeStr = time.strftime("%Y%m%d-%H")
-fileName = f"best_reward:{best_reward}_time:{currentTimeStr}.txt"
+fileName = f"Policy.txt"
 
 #as dict
 hyperparameters = {
@@ -188,6 +189,8 @@ storePolicyAndHyperparamsInFile(fileName, Q, hyperparameters)
 # -----------------SIMULATION------------------------
 # ---------------------------------------------------
 
+if run_simulation.lower() != "y" and run_simulation.lower() != "yes":
+    exit()
 env = gym.make("LunarLander-v2", render_mode="human",
                continuous=False, gravity=-10.0, enable_wind=False, wind_power=15.0, turbulence_power=1.5
                )
