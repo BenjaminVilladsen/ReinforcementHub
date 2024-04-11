@@ -1,239 +1,163 @@
+import json
 import pickle
 import time
-
 import gymnasium as gym
 import numpy as np
 from collections import deque
 from playsound import playsound
-# Play the sound
 
-# Hyperparameters ranges
-alpha_values = [0.5, 0.1, 0.05]
-gamma_values = [0.5, 0.9, 0.99]
-epsilon_decay_values = [0.5, 1, 0.9]
+# Hyperparameters
+alpha_values = [0.5]# 0.1, 0.05]
+gamma_values = [0.5]#, 0.9, 0.99]
+epsilon_decay_values = [0.9]#, 1, 0.9]
 
-
-# Initialize best score
-best_score = -float('inf')
-best_hyperparameters = None
-best_Q = None
-
-n = 10  # Number of steps
-n_bins = 10  # Number of bins per state dimension
-
-
-n_episodes = 5000
+# Simulation parameters
+n_episodes = 1_000
+n_bins = 10
+n = 20
 
 # Environment setup
-env = gym.make("LunarLander-v2",
-               continuous=False, gravity=-10.0, enable_wind=False, wind_power=15.0, turbulence_power=1.5
-               )  # U
+env = gym.make("LunarLander-v2", continuous=False, gravity=-10.0, enable_wind=False, wind_power=15.0, turbulence_power=1.5)
 nA = env.action_space.n
-
-# Initialize Q-table with a discrete approximation of the state space
 Q = np.zeros((n_bins,) * 8 + (nA,))
 
-#store policy and hyperparameters in a file
-def storePolicyAndHyperparamsInFile(fileName, Q, hyperparameters):
-    data = {
-        'Q_table': Q,
-        'hyperparameters': hyperparameters
-    }
-    with open(fileName, 'wb') as file:
-        pickle.dump(data, file)
+# State bounds
+state_bounds = [(-1.5, 1.5), (-1.5, 1.5), (-5, 5), (-5, 5), (-3.1415927, 3.1415927), (-5, 5), (0, 1), (0, 1)]
 
-def loadPolicyAndHyperparamsFromFile(fileName):
-    """
-    Load the policy (Q-table) and hyperparameters from a specified file.
-
-    Parameters:
-    - fileName (str): The name of the file from which to load the data.
-
-    Returns:
-    - dict: A dictionary containing the Q-table under the key 'Q_table' and
-            the hyperparameters under the key 'hyperparameters'.
-    """
-    with open(fileName, 'rb') as file:
-        data = pickle.load(file)
-    return data
-
-# Example usage
-
-
-shouldLoadFromFile = input("Do you want to load the policy and hyperparameters? (yes / just press enter) ")
-
-if shouldLoadFromFile.lower() == "yes":
-    loadFileName = input("Paste the file name here ")
-
-    loaded = loadPolicyAndHyperparamsFromFile(loadFileName)
-    hyperparameters = loaded['hyperparameters']
-    Q = loaded['Q_table']
-
-run_simulation = input("Do you want to run the simulation? (yes/no): ")
-
-
-# Discretization function
+# Helper functions
 def discretize(observation, bins, bounds):
-    discretized = list()
-    for i, bound in enumerate(bounds):
-        low, high = bound
-        if observation[i] <= low:
-            idx = 0
-        elif observation[i] >= high:
-            idx = bins - 1
-        else:
-            idx = int((observation[i] - low) / (high - low) * bins)
-        discretized.append(idx)
+    discretized = [0 if obs <= low else bins - 1 if obs >= high else int((obs - low) / (high - low) * bins)
+                   for obs, (low, high) in zip(observation, bounds)]
     return tuple(discretized)
 
-
-# Bounds for discretization
-state_bounds = [
-    (-1.5, 1.5),  # Position X
-    (-1.5, 1.5),  # Position Y
-    (-5, 5),      # Velocity X
-    (-5, 5),      # Velocity Y
-    (-3.1415927, 3.1415927),  # Orientation
-    (-5, 5),      # Angular Velocity
-    (0, 1),       # Left Leg Contact
-    (0, 1)        # Right Leg Contact
-]
-
-
-# Epsilon-greedy policy
 def epsilon_greedy_policy(state, Q, epsilon):
-    if np.random.rand() < epsilon:
-        return env.action_space.sample()
-    else:
-        return np.argmax(Q[state])
+    return env.action_space.sample() if np.random.rand() < epsilon else np.argmax(Q[state])
 
-
-# Helper function to update Q-table
 def update_Q(Q, state, action, reward, next_state, next_action, alpha, gamma):
     Q[state][action] += alpha * (reward + gamma * Q[next_state][next_action] - Q[state][action])
     return Q
 
-#Stats
-episode_rewards = []
-episode_lengths = []
+def store_policy(filename, Q):
+    with open(filename, 'wb') as file:
+        pickle.dump({'Q_table': Q}, file)
+
+def load_policy(filename):
+    with open(filename, 'rb') as file:
+        return pickle.load(file)
+
+def store_hyperparameters(filename, hyperparameters):
+    with open(filename, 'w') as file:
+        json.dump({'hyperparameters': hyperparameters}, file)
+
+def load_hyperparameters(filename):
+    with open(filename, 'r') as file:
+        data = json.load(file)
+        return data['hyperparameters']
+
+def run_simulation(episodes=100, render_mode="human"):
+    for i in range(episodes):
+        observation, info = env.reset()
+        state = discretize(observation, n_bins, state_bounds)
+        total_reward = 0
+
+        while True:
+            action = epsilon_greedy_policy(state, Q, epsilon=0)
+            observation, reward, done, truncated, info = env.step(action)
+            total_reward += reward
+            state = discretize(observation, n_bins, state_bounds)
+
+            if done or truncated:
+                print(f"Simulation episode {i + 1}: Reward: {total_reward}")
+                break
+
+# Main execution
+if input("Do you want to load the policy and hyperparameters? (yes / just press enter) ").lower() == "yes":
+    filename = input("Paste the file name here ")
+    loaded_data = load_policy(filename)
+    Q = loaded_data['Q_table']
+
+if input("Do you want to run the simulation? (yes/no): ").lower() in ["yes", "y"]:
+    env = gym.make("LunarLander-v2", render_mode="human", continuous=False, gravity=-10.0, enable_wind=False, wind_power=15.0, turbulence_power=1.5)
+    run_simulation()
+    env.close()
+else:
+    # Variables to track the best model
+    best_score = -float('inf')
+    best_hyperparameters = None
+    best_Q = None
+
+    # Stats
 
 
-# n step sarsas
-best_reward = -99999
+    for alpha in alpha_values:
+        for gamma in gamma_values:
 
-for alpha in alpha_values:
-    for gamma in gamma_values:
-        for epsilon_decay in epsilon_decay_values:
-            print(f"Running for alpha={alpha}, gamma={gamma}, epsilon_decay={epsilon_decay}")
-            epsilon_start = 1.0
-            epsilon_min = 0.01
-            epsilon = epsilon_start
 
-            if (shouldLoadFromFile != "yes"):
-                for i_episode in range(n_episodes):  # Number of episodes
+            for epsilon_decay in epsilon_decay_values:
+                print(f"Running for alpha={alpha}, gamma={gamma}, epsilon_decay={epsilon_decay}")
+                epsilon = 1.0
+                epsilon_min = 0.01
+                Q = np.zeros((n_bins,) * 8 + (nA,))  # Re-initialize Q for each hyperparameter set
+
+                episode_rewards = []
+                episode_lengths = []
+
+                for i_episode in range(n_episodes):
                     epsilon = max(epsilon * epsilon_decay, epsilon_min)
-                    #episode stats
-                    total_reward = 0
-                    steps = 0
-                    best_reward = 0
-
                     observation, info = env.reset()
                     state = discretize(observation, n_bins, state_bounds)
                     action = epsilon_greedy_policy(state, Q, epsilon)
                     state_action_reward = deque(maxlen=n + 1)
+                    total_reward = 0
+                    steps = 0
+                    best_reward = 0
 
-                    action_avg_reward = 0
 
                     while True:
                         observation, reward, done, truncated, info = env.step(action)
                         total_reward += reward
-                        best_reward = max(best_reward, reward)
-                        steps += 1
-
                         next_state = discretize(observation, n_bins, state_bounds)
                         next_action = epsilon_greedy_policy(next_state, Q, epsilon)
                         state_action_reward.append((state, action, reward))
+                        steps += 1
+                        best_reward = max(best_reward, reward)
 
-                        if len(state_action_reward) >= n + 1:
+                        if len(state_action_reward) == n + 1:
                             state_to_update, action_to_update, _ = state_action_reward[0]
-                            G = sum([gamma ** i * r for i, (_, _, r) in enumerate(state_action_reward)])
+                            G = sum(gamma ** i * r for i, (_, _, r) in enumerate(state_action_reward))
                             if not done and not truncated:
                                 G += gamma ** n * Q[next_state][next_action]
                             Q = update_Q(Q, state_to_update, action_to_update, G, next_state, next_action, alpha, gamma)
 
                         if done or truncated:
                             break
-                        state = next_state
-                        action = next_action
+                        state, action = next_state, next_action
 
                     episode_rewards.append(total_reward)
                     episode_lengths.append(steps)
                     if np.mean(episode_rewards[-(n_episodes // 10):]) > best_reward:
                         best_reward = np.mean(episode_rewards[-(n_episodes // 10):])
-
-                    #print stats
-                    if (i_episode + 1) % (n_episodes // 10) == 0:
+                    # print stats
+                    if i_episode % 100 == 0:
                         print(f"Episode: {i_episode + 1}, "
                               f"Average Reward: {np.mean(episode_rewards[-(n_episodes // 10):]):.2f}, "
                               f"Average Length: {np.mean(episode_lengths[-(n_episodes // 10):]):.2f}, "
                               f"Total Reward: {sum(episode_rewards[-(n_episodes // 10):]):.2f}")
                         print(f"Best Reward: {best_reward:.2f}")
 
+                    # Logging and saving best model
+                    if total_reward > best_score:
+                        best_score = total_reward
+                        best_hyperparameters = {'alpha': alpha, 'gamma': gamma, 'epsilon_decay': epsilon_decay}
+                        best_Q = Q.copy()
 
-                env.close()
-                current_score = np.mean(episode_rewards[-100:])
+                print(
+                    f"Finished training for alpha={alpha}, gamma={gamma}, epsilon_decay={epsilon_decay} with best score: {best_score}")
 
-                # Update best score and hyperparameters if current model is better
-                if current_score > best_score:
-                    best_score = current_score
-                    best_hyperparameters = {'alpha': alpha, 'gamma': gamma, 'epsilon_decay': epsilon_decay}
-                    best_Q = Q.copy()  # Make sure to copy the Q-table, not just reference it
+    # Save the best policy and hyperparameters
+    filename = f"best_policy_{time.strftime('%Y%m%d-%H%M%S')}.pkl"
+    store_policy(filename, best_Q)
+    store_hyperparameters(filename.replace(".pkl", ".json"), best_hyperparameters)
+    print(f"Best policy and hyperparameters saved to {filename}")
 
-#file name with best cost in policy and time and date
-#current time
-currentTimeStr = time.strftime("%Y%m%d-%H")
-fileName = f"Policy.txt"
-
-#as dict
-hyperparameters = {
-    'alpha': alpha,
-    'gamma': gamma,
-    'n': n,
-    'n_bins': n_bins,
-    'epsilon_start': epsilon_start,
-    'epsilon_decay': epsilon_decay,
-    'epsilon_min': epsilon_min,
-    'n_episodes': n_episodes
-}
-
-storePolicyAndHyperparamsInFile(fileName, best_Q, best_hyperparameters)
 playsound('sound.mp3')
-
-# ---------------------------------------------------
-# -----------------SIMULATION------------------------
-# ---------------------------------------------------
-
-if run_simulation.lower() != "y" and run_simulation.lower() != "yes":
-    exit()
-env = gym.make("LunarLander-v2", render_mode="human",
-               continuous=False, gravity=-10.0, enable_wind=False, wind_power=15.0, turbulence_power=1.5
-               )
-for i_simulation in range(100):
-    observation, info = env.reset()
-    state = discretize(observation, n_bins, state_bounds)
-    total_reward = 0
-
-    while True:
-        action = epsilon_greedy_policy(state, Q, epsilon=0)
-        observation, reward, done, truncated, info = env.step(action)
-        total_reward += reward
-        state = discretize(observation, n_bins, state_bounds)
-
-        if done or truncated:
-            print(f"Simulation episode {i_simulation + 1}: Reward: {total_reward}")
-            break
-
-env.close()
-
-
-
