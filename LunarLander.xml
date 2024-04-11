@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.6//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_6.dtd'>
+<nta>
+	<declaration>// Place global declarations here.
+broadcast chan left, right, main, free;
+clock TIME, SIDE_FIRE, MAIN_FIRE;
+bool main_on, left_on, right_on;
+
+///Constants
+const double GRAVITY = -10.0;
+const double PI = 3.1415;
+const double MAIN_ENGINE_POWER = 13.0;
+const double SIDE_ENGINE_POWER = 0.6;
+
+///Landing pad pos
+const double LANDING_PAD_LENGTH = 3.0;
+const double LANDING_PAD_START[2] = {0, -LANDING_PAD_LENGTH};
+const double LANDING_PAD_END[2] = {0, LANDING_PAD_LENGTH};
+
+///Thresholds
+const double X_POS_MIN = -1.5;
+const double X_POS_MAX = 1.5;
+const double Y_POS_MIN = -1.5;
+const double Y_POS_MAX = 1.5;
+const double X_VEL_MAX = 5;
+const double X_VEL_MIN = -5;
+const double Y_VEL_MAX = 5;
+const double Y_VEL_MIN = -5;
+const double MIN_ANGLE = -PI;
+const double MAX_ANGLE = PI;
+const double ANG_VEL_MIN = -5;
+const double ANG_VEL_MAX = 5;
+
+///Lander properties
+clock lander_pos_x=0, lander_pos_y=1.5, lander_vel_x=0, lander_vel_y=0, lander_angle=0, lander_angle_vel=0;
+bool left_leg=false, right_leg=false;
+const double LANDER_POLY[6][2] = {
+    {-14,  17},
+    {-17,   0},
+    {-17, -10},
+    { 17, -10},
+    { 17,   0},
+    { 14,  17}
+};
+const double 
+    LEG_AWAY=20, 
+    LEG_DOWN=18, 
+    LEG_W=2, 
+    LEG_H=8, 
+    LEG_SPRING_TORQUE=40;
+
+
+double min(double a, double b){
+    return a &lt; b? a : b;
+}
+
+double max(double a, double b){
+    return a &gt; b? a : b;
+}
+
+double clip(double val, double min_val, double max_val) {
+    return max(min_val, min(max_val, val));
+}
+
+void running() {
+    lander_pos_x = clip(lander_pos_x, X_POS_MIN, X_POS_MAX);
+    lander_pos_y = clip(lander_pos_y, Y_POS_MIN, Y_POS_MAX);
+    lander_vel_x = clip(lander_vel_x, X_VEL_MIN, X_VEL_MAX);
+    lander_vel_y = clip(lander_vel_y, Y_VEL_MIN, Y_VEL_MAX);
+    lander_angle = clip(lander_angle, MIN_ANGLE, MAX_ANGLE);
+    lander_angle_vel = clip(lander_angle_vel, ANG_VEL_MIN, ANG_VEL_MAX);
+}
+
+
+void activate_engine(int engine) {
+    if (engine == 1) {
+        main_on = true;
+        left_on = false;
+        right_on = false;
+    } 
+    else if (engine == 2) {
+        main_on = false;
+        left_on = true;
+        right_on = false;
+    } 
+    else if (engine == 3) {
+        main_on = false;
+        left_on = false;
+        right_on = true;
+    } 
+    else {
+        main_on = false;
+        left_on = false;
+        right_on = false;
+    }
+}
+
+double y_vel() {
+    if (lander_pos_y &lt; Y_POS_MIN)
+        return 0;
+    
+    if (lander_pos_y &gt; Y_POS_MAX)
+        return 0;
+
+    return lander_vel_y;
+}
+
+double x_vel() {
+    if (lander_pos_x &lt; X_POS_MIN)
+        return 0;
+    
+    if (lander_pos_x &gt; X_POS_MAX)
+        return 0;
+
+    return lander_vel_x;
+}
+
+double ang_vel() {
+    if (lander_angle &lt; MIN_ANGLE)
+        return 0;
+    
+    if (lander_angle &gt; MAX_ANGLE)
+        return 0;
+
+    return lander_angle_vel;
+}
+
+double y_acc() {
+    if (lander_vel_y &lt; Y_VEL_MIN)
+        return 0;
+
+    if (lander_vel_y &gt; Y_VEL_MAX)
+        return 0;
+    
+    return GRAVITY + main_on * MAIN_ENGINE_POWER * cos(lander_angle);
+}
+
+double x_acc() {
+    if (lander_vel_x &lt; X_VEL_MIN)
+        return 0;
+
+    if (lander_vel_x &gt; X_VEL_MAX)
+        return 0;
+    
+    return main_on * MAIN_ENGINE_POWER * sin(lander_angle);
+}
+
+double ang_acc() {
+    if (lander_angle_vel &lt; ANG_VEL_MIN)
+        return 0;
+
+    if (lander_angle_vel &gt; ANG_VEL_MAX)
+        return 0;
+
+    if (left_on)
+        return SIDE_ENGINE_POWER;
+
+    if (right_on)
+        return -SIDE_ENGINE_POWER;
+
+    return 0;
+}
+</declaration>
+	<template>
+		<name x="5" y="5">Agent</name>
+		<declaration>// Place local declarations here.
+clock t;</declaration>
+		<location id="id0" x="25" y="246">
+			<name x="-8" y="238">B</name>
+			<committed/>
+		</location>
+		<location id="id1" x="425" y="246">
+			<name x="442" y="238">A</name>
+			<label kind="invariant" x="416" y="263">t&lt;=1 &amp;&amp;
+t'==10</label>
+		</location>
+		<init ref="id1"/>
+		<transition id="id2">
+			<source ref="id0"/>
+			<target ref="id1"/>
+			<label kind="synchronisation" x="195" y="357">right!</label>
+			<nail x="221" y="399"/>
+		</transition>
+		<transition id="id3">
+			<source ref="id0"/>
+			<target ref="id1"/>
+			<label kind="synchronisation" x="204" y="297">left!</label>
+			<nail x="221" y="340"/>
+		</transition>
+		<transition id="id4">
+			<source ref="id0"/>
+			<target ref="id1"/>
+			<label kind="synchronisation" x="195" y="127">free!</label>
+			<nail x="221" y="110"/>
+		</transition>
+		<transition id="id5">
+			<source ref="id0"/>
+			<target ref="id1"/>
+			<label kind="synchronisation" x="204" y="195">main!</label>
+			<nail x="221" y="178"/>
+		</transition>
+		<transition id="id6" controllable="false">
+			<source ref="id1"/>
+			<target ref="id0"/>
+			<label kind="guard" x="161" y="246">t==1</label>
+			<label kind="assignment" x="229" y="246">t=0.0</label>
+		</transition>
+	</template>
+	<template>
+		<name>LunarLander</name>
+		<location id="id7" x="-1835" y="824">
+			<name x="-1852" y="849">Init</name>
+			<committed/>
+		</location>
+		<location id="id8" x="-1249" y="824">
+			<name x="-1223" y="815">Running</name>
+			<label kind="invariant" x="-1436" y="841">lander_vel_x' == x_acc() &amp;&amp;
+lander_vel_y' == y_acc() &amp;&amp;
+lander_angle_vel' == ang_acc() &amp;&amp;
+lander_pos_x' == x_vel() &amp;&amp;
+lander_pos_y' == y_vel() &amp;&amp;
+lander_angle' == ang_vel()</label>
+		</location>
+		<location id="id9" x="-1249" y="518">
+			<name x="-1232" y="493">Still_running</name>
+			<committed/>
+		</location>
+		<init ref="id7"/>
+		<transition id="id10">
+			<source ref="id8"/>
+			<target ref="id9"/>
+			<label kind="synchronisation" x="-960" y="645">free?</label>
+			<label kind="assignment" x="-960" y="662">activate_engine(0)</label>
+			<nail x="-968" y="756"/>
+			<nail x="-968" y="569"/>
+		</transition>
+		<transition id="id11">
+			<source ref="id8"/>
+			<target ref="id9"/>
+			<label kind="synchronisation" x="-1172" y="645">main?</label>
+			<label kind="assignment" x="-1172" y="662">activate_engine(1)</label>
+			<nail x="-1181" y="747"/>
+			<nail x="-1181" y="586"/>
+		</transition>
+		<transition id="id12">
+			<source ref="id8"/>
+			<target ref="id9"/>
+			<label kind="synchronisation" x="-1563" y="645">left?</label>
+			<label kind="assignment" x="-1674" y="662">activate_engine(2)</label>
+			<nail x="-1504" y="747"/>
+			<nail x="-1504" y="577"/>
+		</transition>
+		<transition id="id13">
+			<source ref="id8"/>
+			<target ref="id9"/>
+			<label kind="synchronisation" x="-1368" y="645">right?</label>
+			<label kind="assignment" x="-1470" y="662">activate_engine(3)</label>
+			<nail x="-1317" y="739"/>
+			<nail x="-1317" y="586"/>
+		</transition>
+		<transition id="id14" controllable="false">
+			<source ref="id9"/>
+			<target ref="id8"/>
+			<label kind="assignment" x="-1283" y="620">running()</label>
+		</transition>
+		<transition id="id15" controllable="false">
+			<source ref="id7"/>
+			<target ref="id8"/>
+		</transition>
+	</template>
+	<system>system Agent, LunarLander;
+</system>
+	<queries>
+		<query>
+			<formula>A[] not deadlock</formula>
+			<comment/>
+		</query>
+	</queries>
+</nta>
