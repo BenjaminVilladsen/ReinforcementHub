@@ -14,6 +14,8 @@ const double MAIN_ENGINE_POWER = 13.0;
 const double SIDE_ENGINE_POWER = 0.6;
 const double MASS = 6.40;
 const double GROUND_LEVEL = 0;
+const double RADIUS = 29.1212;
+const double MOMENT_OF_INERTIA = 0.5*MASS*(RADIUS*RADIUS);
 
 ///Landing pad pos
 const double LANDING_PAD_LENGTH = 3.0;
@@ -138,6 +140,18 @@ double clip(double val, double min_val, double max_val) {
     return max(min_val, min(max_val, val));
 }
 
+//remove this later
+double test_new_angle = 0;
+
+
+//on impact, calculate how much the angle should rotate
+double getNewAngle(){
+    double ang_vel = lander_angle_vel + (GRAVITY * MOMENT_OF_INERTIA);
+    double new_ang = lander_angle + ang_vel;
+    test_new_angle = new_ang;
+    return new_ang;
+}
+
 void running() {
     lander_pos_x = clip(lander_pos_x, X_POS_MIN, X_POS_MAX);
     lander_pos_y = clip(lander_pos_y, Y_POS_MIN, Y_POS_MAX);
@@ -248,6 +262,9 @@ double calc_torque(int leg) {
 
     return (MASS * GRAVITY * x) - (MASS * lander_vel_x * y) + (MASS * lander_vel_y * x);
 }
+
+
+
 
 
 double angle_in_deg;
