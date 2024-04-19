@@ -15,7 +15,7 @@ const double SIDE_ENGINE_POWER = 0.6;
 const double MASS = 6.40;
 const double GROUND_LEVEL = 0;
 const double RADIUS = 29.1212;
-const double MOMENT_OF_INERTIA = (1/12)*MASS*(RADIUS*RADIUS);
+const double MOMENT_OF_INERTIA = MASS*(RADIUS*RADIUS);
 
 ///Landing pad pos
 const double LANDING_PAD_LENGTH = 3.0;
@@ -31,8 +31,8 @@ const double X_VEL_MAX = 10;
 const double X_VEL_MIN = -10;
 const double Y_VEL_MAX = 10;
 const double Y_VEL_MIN = -10;
-const double MIN_ANGLE = -2*PI;
-const double MAX_ANGLE = 2*PI;
+const double MIN_ANGLE = 0.5*PI;
+const double MAX_ANGLE = 0.5*PI;
 const double ANG_VEL_MIN = -5;
 const double ANG_VEL_MAX = 5;
 
@@ -87,8 +87,7 @@ int check_ground_contact() {
             ry = sin(lander_angle) * LANDER_POLY[i][0] + cos(lander_angle) * LANDER_POLY[i][1] + lander_pos_y;
 
             if (ry &lt;= GROUND_LEVEL) {
-                //left_leg_contact = true;
-                right_leg_contact = true;
+                left_leg_contact = true;
             }
         }
     }
@@ -100,8 +99,7 @@ int check_ground_contact() {
             ry = sin(lander_angle) * LANDER_POLY[i][0] + cos(lander_angle) * LANDER_POLY[i][1] + lander_pos_y;
 
             if (ry &lt;= GROUND_LEVEL) {
-                //right_leg_contact = true;
-                left_leg_contact = true;
+                right_leg_contact = true;
             }
         }
     }
@@ -129,18 +127,23 @@ bool inner_point() {
     return (y1 &lt;= GROUND_LEVEL) || (y2 &lt;= GROUND_LEVEL);
 }
 
-double right_leg_to_ground_angle = 0;
-double left_leg_to_ground_angle= 0;
-double inner_coordinates(){
-    double y1 = sin(lander_angle) * LANDER_POLY[9][0] + cos(lander_angle) * LANDER_POLY[9][1];
-    double y2 = sin(lander_angle) * LANDER_POLY[12][0] + cos(lander_angle) * LANDER_POLY[12][1];
-    double x1 = cos(lander_angle) * LANDER_POLY[9][0] - sin(lander_angle) * LANDER_POLY[9][1];
-    double x2 = cos(lander_angle) * LANDER_POLY[12][0] - sin(lander_angle) * LANDER_POLY[12][1];
+double penis;
 
-    right_leg_to_ground_angle = y1/sqrt(x1*x1+y1*y1);
-    left_leg_to_ground_angle = y2/sqrt(x2*x2+y2*y2);
+double lander_angle_ground(int leg, bool inner){
+    //1 = right, 2 = left
+
+    double vertex1 = inner? 9 : 8; 
+    double vertex2 = inner? 12 : 13; 
+
+    double y1 = sin(lander_angle) * LANDER_POLY[vertex1][0] + cos(lander_angle) * LANDER_POLY[vertex1][1];
+    double y2 = sin(lander_angle) * LANDER_POLY[vertex2][0] + cos(lander_angle) * LANDER_POLY[vertex2][1];
+    double x1 = cos(lander_angle) * LANDER_POLY[vertex1][0] - sin(lander_angle) * LANDER_POLY[vertex1][1];
+    double x2 = cos(lander_angle) * LANDER_POLY[vertex2][0] - sin(lander_angle) * LANDER_POLY[vertex2][1];
+
+    double right_leg_to_ground_angle = y1/sqrt(x1*x1+y1*y1);
+    double left_leg_to_ground_angle = y2/sqrt(x2*x2+y2*y2);
     
-    return right_leg_to_ground_angle;
+    return leg == 1? right_leg_to_ground_angle : left_leg_to_ground_angle;
 }
 
 
@@ -156,22 +159,11 @@ double clip(double val, double min_val, double max_val) {
     return max(min_val, min(max_val, val));
 }
 
-//remove this later
-double test_new_angle = 0;
 
 double radians_to_degrees_returned(double rad) {
     return rad * (180.0 / PI);
 }
 
-
-//on impact, calculate how much the angle should rotate
-double getNewAngle(){
-    double ang_vel = lander_angle_vel + (GRAVITY * MOMENT_OF_INERTIA);
-    //double ang_vel = lander_angle_vel;
-    double new_ang = lander_angle + ang_vel;
-    test_new_angle = radians_to_degrees_returned(new_ang);
-    return new_ang;
-}
 
 double angle_vel_deg = 0; 
 
@@ -267,10 +259,10 @@ double ang_acc() {
         return 0;
 
     if (left_on)
-        return SIDE_ENGINE_POWER;
+        return -SIDE_ENGINE_POWER;
 
     if (right_on)
-        return -SIDE_ENGINE_POWER;
+        return SIDE_ENGINE_POWER;
 
     return 0;
 }
@@ -378,8 +370,8 @@ lander_angle' == 0</label>
 		<location id="id11" x="-1045" y="442">
 			<name x="-1055" y="408">Termination</name>
 		</location>
-		<location id="id12" x="-1215" y="663">
-			<name x="-1300" y="654">One_leg</name>
+		<location id="id12" x="-1241" y="663">
+			<name x="-1326" y="654">One_leg</name>
 			<committed/>
 		</location>
 		<location id="id13" x="-1156" y="875">
@@ -390,19 +382,18 @@ lander_angle' == 0</label>
 		<transition id="id15">
 			<source ref="id12"/>
 			<target ref="id14"/>
-			<label kind="guard" x="-1156" y="671">inner_point()</label>
+			<label kind="guard" x="-1215" y="654">inner_point()</label>
 		</transition>
 		<transition id="id16">
 			<source ref="id12"/>
 			<target ref="id13"/>
-			<label kind="guard" x="-1334" y="731">not inner_point()</label>
+			<label kind="guard" x="-1394" y="697">not inner_point()</label>
 		</transition>
 		<transition id="id17">
 			<source ref="id10"/>
 			<target ref="id12"/>
-			<label kind="select" x="-1326" y="561">e : int[1,2]</label>
-			<label kind="guard" x="-1326" y="578">touch == e</label>
-			<label kind="assignment" x="-1241" y="569">getNewAngle()</label>
+			<label kind="select" x="-1351" y="544">e : int[1,2]</label>
+			<label kind="guard" x="-1351" y="569">touch == e</label>
 		</transition>
 		<transition id="id18" controllable="false">
 			<source ref="id10"/>
