@@ -14,8 +14,10 @@ const double MAIN_ENGINE_POWER = 13.0;
 const double SIDE_ENGINE_POWER = 0.6;
 const double MASS = 6.40;
 const double GROUND_LEVEL = 0;
-const double RADIUS = 29.1212;
-const double MOMENT_OF_INERTIA = MASS*(RADIUS*RADIUS);
+const double RADIUS_OUT = 29.54;
+const double RADIUS_IN = 26.91;
+const double MOMENT_OF_INERTIA_OUT = MASS*(RADIUS_OUT*RADIUS_OUT);
+const double MOMENT_OF_INERTIA_IN = MASS*(RADIUS_IN*RADIUS_IN);
 
 ///Landing pad pos
 const double LANDING_PAD_LENGTH = 3.0;
@@ -31,10 +33,14 @@ const double X_VEL_MAX = 10;
 const double X_VEL_MIN = -10;
 const double Y_VEL_MAX = 10;
 const double Y_VEL_MIN = -10;
-const double MIN_ANGLE = 0.5*PI;
-const double MAX_ANGLE = 0.5*PI;
+const double MIN_ANGLE = -2*PI;
+const double MAX_ANGLE = 2*PI;
 const double ANG_VEL_MIN = -5;
 const double ANG_VEL_MAX = 5;
+const double GROUND_ANG_VEL_MAX = 5;
+const double GROUND_ANG_VEL_MIN = -5;
+const double GROUND_ANG_MAX = PI/2;
+const double GROUND_ANG_MIN = -PI/2;
 
 ///Lander properties
 clock lander_pos_x=0, lander_pos_y=45, lander_vel_x=0, lander_vel_y=0, lander_angle=0, lander_angle_vel=0;
@@ -127,13 +133,27 @@ bool inner_point() {
     return (y1 &lt;= GROUND_LEVEL) || (y2 &lt;= GROUND_LEVEL);
 }
 
-double penis;
+clock lander_angle_ground = 0;
+clock lander_angle_ground_vel = 0;
 
-double lander_angle_ground(int leg, bool inner){
+double ground_angle_acc() {
+    double rx = lander_pos_x * 1;
+    double fy = GRAVITY;
+    double tau = rx*fy;
+    bool within_limits = lander_angle_ground_vel * 1 &lt; GROUND_ANG_VEL_MAX || lander_angle_ground_vel*1 &gt; GROUND_ANG_VEL_MIN;
+    
+    return within_limits ? tau : 0.0;
+}
+
+double calc_init_vel() {
+    return MASS * (lander_pos_x * lander_vel_y - lander_pos_y * lander_vel_x);
+}
+
+double lander_angle_ground_calc(int leg, bool inner){
     //1 = right, 2 = left
 
-    double vertex1 = inner? 9 : 8; 
-    double vertex2 = inner? 12 : 13; 
+    int vertex1 = inner? 9 : 8; 
+    int vertex2 = inner? 12 : 13; 
 
     double y1 = sin(lander_angle) * LANDER_POLY[vertex1][0] + cos(lander_angle) * LANDER_POLY[vertex1][1];
     double y2 = sin(lander_angle) * LANDER_POLY[vertex2][0] + cos(lander_angle) * LANDER_POLY[vertex2][1];
@@ -166,6 +186,12 @@ double radians_to_degrees_returned(double rad) {
 
 
 double angle_vel_deg = 0; 
+
+void alive() {
+    lander_angle_ground = clip(lander_angle_ground, GROUND_ANG_MIN, GROUND_ANG_MAX);
+    lander_angle_ground_vel = clip(lander_angle_ground_vel, GROUND_ANG_VEL_MIN, GROUND_ANG_VEL_MAX);
+    
+}
 
 void running() {
     lander_pos_x = clip(lander_pos_x, X_POS_MIN, X_POS_MAX);
@@ -267,22 +293,6 @@ double ang_acc() {
     return 0;
 }
 
-double lander_torque;
-
-double calc_torque(int leg) {
-    double x = leg == 2? LANDER_POLY[9][0] : LANDER_POLY[12][0];
-    double y = leg == 2? LANDER_POLY[9][1] : LANDER_POLY[12][1];
-    
-    x = x - lander_pos_x;
-    y = x - lander_pos_y;
-
-    return (MASS * GRAVITY * x) - (MASS * lander_vel_x * y) + (MASS * lander_vel_y * x);
-}
-
-
-
-
-
 double angle_in_deg;
 
 void radians_to_degrees() {
@@ -351,7 +361,9 @@ lander_vel_y' == y_acc() &amp;&amp;
 lander_angle_vel' == ang_acc() &amp;&amp;
 lander_pos_x' == x_vel() &amp;&amp;
 lander_pos_y' == y_vel() &amp;&amp;
-lander_angle' == ang_vel()</label>
+lander_angle' == ang_vel() &amp;&amp;
+lander_angle_ground_vel' == 0 &amp;&amp;
+lander_angle_ground' == 0</label>
 		</location>
 		<location id="id9" x="-1810" y="646">
 			<name x="-1784" y="629">Still_flying</name>
@@ -374,43 +386,49 @@ lander_angle' == 0</label>
 			<name x="-1326" y="654">One_leg</name>
 			<committed/>
 		</location>
-		<location id="id13" x="-1156" y="875">
-		</location>
-		<location id="id14" x="-1020" y="748">
+		<location id="id13" x="-1241" y="884">
+			<name x="-1241" y="842">Alive</name>
+			<label kind="invariant" x="-1496" y="918">lander_angle_ground_vel' == ground_angle_acc() &amp;&amp;
+lander_angle_ground' == lander_angle_ground_vel</label>
+			<urgent/>
 		</location>
 		<init ref="id7"/>
+		<transition id="id14">
+			<source ref="id13"/>
+			<target ref="id11"/>
+			<label kind="guard" x="-1190" y="569">lander_angle_ground * 1 &lt; GROUND_ANG_MAX ||
+lander_angle_ground * 1 &gt; GROUND_ANG_MIN</label>
+			<nail x="-969" y="688"/>
+		</transition>
 		<transition id="id15">
 			<source ref="id12"/>
-			<target ref="id14"/>
-			<label kind="guard" x="-1215" y="654">inner_point()</label>
+			<target ref="id13"/>
+			<label kind="select" x="-1394" y="705">b : int[0,1]</label>
+			<label kind="guard" x="-1394" y="722">b == inner_point()</label>
+			<label kind="assignment" x="-1394" y="739">lander_angle_ground = lander_angle_ground_calc(touch, b),
+lander_angle_ground_vel = calc_init_vel()</label>
 		</transition>
 		<transition id="id16">
-			<source ref="id12"/>
-			<target ref="id13"/>
-			<label kind="guard" x="-1394" y="697">not inner_point()</label>
-		</transition>
-		<transition id="id17">
 			<source ref="id10"/>
 			<target ref="id12"/>
 			<label kind="select" x="-1351" y="544">e : int[1,2]</label>
 			<label kind="guard" x="-1351" y="569">touch == e</label>
 		</transition>
-		<transition id="id18" controllable="false">
+		<transition id="id17" controllable="false">
 			<source ref="id10"/>
 			<target ref="id11"/>
 			<label kind="select" x="-1139" y="374">e : int[3,4]</label>
 			<label kind="guard" x="-1130" y="391">touch == e</label>
 		</transition>
-		<transition id="id19" controllable="false">
+		<transition id="id18" controllable="false">
 			<source ref="id9"/>
 			<target ref="id10"/>
 			<label kind="select" x="-1640" y="450">e: int[1,4]</label>
 			<label kind="guard" x="-1640" y="467">e == check_ground_contact()</label>
 			<label kind="assignment" x="-1640" y="484">touch = e,
-lander_torque = calc_torque(e),
 radians_to_degrees()</label>
 		</transition>
-		<transition id="id20">
+		<transition id="id19">
 			<source ref="id8"/>
 			<target ref="id9"/>
 			<label kind="synchronisation" x="-1521" y="773">free?</label>
@@ -418,7 +436,7 @@ radians_to_degrees()</label>
 			<nail x="-1529" y="884"/>
 			<nail x="-1529" y="697"/>
 		</transition>
-		<transition id="id21">
+		<transition id="id20">
 			<source ref="id8"/>
 			<target ref="id9"/>
 			<label kind="synchronisation" x="-1733" y="773">main?</label>
@@ -426,7 +444,7 @@ radians_to_degrees()</label>
 			<nail x="-1742" y="875"/>
 			<nail x="-1742" y="714"/>
 		</transition>
-		<transition id="id22">
+		<transition id="id21">
 			<source ref="id8"/>
 			<target ref="id9"/>
 			<label kind="synchronisation" x="-2124" y="773">left?</label>
@@ -434,7 +452,7 @@ radians_to_degrees()</label>
 			<nail x="-2065" y="875"/>
 			<nail x="-2065" y="705"/>
 		</transition>
-		<transition id="id23">
+		<transition id="id22">
 			<source ref="id8"/>
 			<target ref="id9"/>
 			<label kind="synchronisation" x="-1929" y="773">right?</label>
@@ -442,13 +460,13 @@ radians_to_degrees()</label>
 			<nail x="-1878" y="867"/>
 			<nail x="-1878" y="714"/>
 		</transition>
-		<transition id="id24">
+		<transition id="id23">
 			<source ref="id9"/>
 			<target ref="id8"/>
 			<label kind="assignment" x="-1844" y="748">running(),
 radians_to_degrees()</label>
 		</transition>
-		<transition id="id25" controllable="false">
+		<transition id="id24" controllable="false">
 			<source ref="id7"/>
 			<target ref="id8"/>
 		</transition>
