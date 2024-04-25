@@ -33,8 +33,8 @@ const double X_VEL_MAX = 10;
 const double X_VEL_MIN = -10;
 const double Y_VEL_MAX = 10;
 const double Y_VEL_MIN = -10;
-const double MIN_ANGLE = -2*PI;
-const double MAX_ANGLE = 2*PI;
+const double MIN_ANGLE = -0.1 * PI;
+const double MAX_ANGLE = 0.1 * PI;
 const double ANG_VEL_MIN = -5;
 const double ANG_VEL_MAX = 5;
 const double GROUND_ANG_VEL_MAX = 5;
@@ -42,9 +42,12 @@ const double GROUND_ANG_VEL_MIN = -5;
 const double GROUND_ANG_MAX = PI/2;
 const double GROUND_ANG_MIN = -PI/2;
 
+
 ///Lander properties
 clock lander_pos_x=0, lander_pos_y=45, lander_vel_x=0, lander_vel_y=0, lander_angle=0, lander_angle_vel=0;
 bool left_leg=false, right_leg=false;
+int touch;
+const double LEG_DOWN = 18.00;
 const double LANDER_POLY[14][2] = {
     //Lander body
     {-14,  17},
@@ -66,6 +69,60 @@ const double LANDER_POLY[14][2] = {
     {20.00,-18.00},
     {23.94, -17.31}
 };
+
+///States
+double currentState[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+double previousShape;
+
+
+void updateCurrentState() {
+    currentState[0] = fabs(lander_pos_x) / X_POS_MAX; 
+    currentState[1] = (lander_pos_y - (Y_POS_MIN + LEG_DOWN)) / (Y_POS_MAX / 2);
+    currentState[2] = (lander_vel_x * X_POS_MAX)/50;
+    currentState[3] = (lander_vel_y * (Y_POS_MAX / 2))/50;
+    currentState[4] = lander_angle;
+    currentState[5] = (20.0 * lander_angle_vel)/50;
+    currentState[6] = (touch == 2 || touch == 3) ? 1.1 : 0.0;
+    currentState[7] = (touch == 1 || touch == 3) ? 1.1 : 0.0;
+}
+
+clock cost;
+double calculateShaping(double currentState[8]) {
+    double distance_penalty = -100 * sqrt(currentState[0] * currentState[0] + currentState[1] * currentState[1]);
+    double velocity_penalty = -100 * sqrt(currentState[2] * currentState[2] + currentState[3] * currentState[3]);
+    double angle_penalty = -100 * fabs(currentState[4]);
+    double leg_contact_reward1 = 10 * currentState[6];
+    double leg_contact_reward2 = 10 * currentState[7];
+
+    return distance_penalty + velocity_penalty + angle_penalty + leg_contact_reward1 + leg_contact_reward2;
+}
+
+
+void getReward(){
+    double currentShape = calculateShaping(currentState);
+    double tempCost = currentShape - previousShape;
+    previousShape = currentShape;
+    tempCost = tempCost - MAIN_ENGINE_POWER * 0.3;
+    tempCost = tempCost - SIDE_ENGINE_POWER * 0.03;
+    cost = cost + tempCost;
+}
+
+void getTerminalReward(){
+    if (touch == 4) {
+        cost = cost - 100; 
+    return;   
+    }
+    if (touch == 3) {
+        cost = cost + 100;
+    return;
+    }
+    
+}
+
+void updateTerminalState(){
+    updateCurrentState();
+    getReward();
+}
 
 // Function to check leg and body contact with the ground
 int check_ground_contact() {
@@ -201,6 +258,8 @@ void running() {
     lander_angle = clip(lander_angle, MIN_ANGLE, MAX_ANGLE);
     lander_angle_vel = clip(lander_angle_vel, ANG_VEL_MIN, ANG_VEL_MAX);
     angle_vel_deg = radians_to_degrees_returned(lander_angle_vel);
+    updateCurrentState();
+    getReward();
 }
 
 
@@ -347,9 +406,6 @@ t'==10</label>
 	</template>
 	<template>
 		<name>LunarLander</name>
-		<declaration>int touch;
-
-</declaration>
 		<location id="id7" x="-2396" y="952">
 			<name x="-2413" y="977">Init</name>
 			<committed/>
@@ -396,8 +452,12 @@ lander_angle_ground' == lander_angle_ground_vel</label>
 		<transition id="id14">
 			<source ref="id13"/>
 			<target ref="id11"/>
-			<label kind="guard" x="-1190" y="569">lander_angle_ground * 1 &lt; GROUND_ANG_MAX ||
+			<label kind="select" x="-1223" y="735">e : int[3,4]</label>
+			<label kind="guard" x="-1190" y="569">e == check_ground_contact() &amp;&amp;
+lander_angle_ground * 1 &lt; GROUND_ANG_MAX ||
 lander_angle_ground * 1 &gt; GROUND_ANG_MIN</label>
+			<label kind="assignment" x="-1190" y="790">touch = e,
+getTerminalReward()</label>
 			<nail x="-969" y="688"/>
 		</transition>
 		<transition id="id15">
@@ -419,6 +479,8 @@ lander_angle_ground_vel = calc_init_vel()</label>
 			<target ref="id11"/>
 			<label kind="select" x="-1139" y="374">e : int[3,4]</label>
 			<label kind="guard" x="-1130" y="391">touch == e</label>
+			<label kind="assignment" x="-1215" y="467">getTerminalReward(), 
+updateTerminalState()</label>
 		</transition>
 		<transition id="id18" controllable="false">
 			<source ref="id9"/>
