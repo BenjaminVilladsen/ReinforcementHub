@@ -13,6 +13,7 @@ const double PI = 3.1415;
 const double MAIN_ENGINE_POWER = 13.0;
 const double SIDE_ENGINE_POWER = 0.6;
 const double MASS = 6.40;
+const double MOI = (1/6) * MASS * sqrt(34); //We calculate MOI of a square with sides the length of the bottom of the lander.
 const double GROUND_LEVEL = 0;
 
 //Thresholds
@@ -71,7 +72,39 @@ void updateState() {
 
 
 
+///Helper functions_______________________________________________________
+//Min function
+double min(double a, double b){
+    return a &lt; b? a : b;
+}
+
+//Max function
+double max(double a, double b){
+    return a &gt; b? a : b;
+}
+
+//Clip function
+double clip(double val, double min_val, double max_val) {
+    return max(min_val, min(max_val, val));
+}
+
+//Clip all function
+void clip_all() {
+    lander_pos_x = clip(lander_pos_x, X_POS_MIN, X_POS_MAX);
+    lander_pos_y = clip(lander_pos_y, Y_POS_MIN, Y_POS_MAX);
+    lander_vel_x = clip(lander_vel_x, X_VEL_MIN, X_VEL_MAX);
+    lander_vel_y = clip(lander_vel_y, Y_VEL_MIN, Y_VEL_MAX);
+    lander_angle = clip(lander_angle, MIN_ANGLE, MAX_ANGLE);
+    lander_angle_vel = clip(lander_angle_vel, ANG_VEL_MIN, ANG_VEL_MAX);
+}
+
+
 ///Various functions_______________________________________________________
+//Function for clipping all values
+void flying() {
+    clip_all();
+}
+
 //Function for activating a specific engine
 void activate_engine(int engine) {
     if (engine == 1) {
@@ -94,7 +127,76 @@ void activate_engine(int engine) {
         left_on = false;
         right_on = false;
     }
-}</declaration>
+}
+
+
+///Acceleration and velocities_______________________________________________________
+double y_acc() {
+    if (lander_vel_y &lt;= Y_VEL_MIN)
+        return 0;
+
+    if (lander_vel_y &gt;= Y_VEL_MAX)
+        return 0;
+    
+    return GRAVITY + (main_on * MAIN_ENGINE_POWER * cos(lander_angle)) / MASS;
+}
+
+double x_acc() {
+    if (lander_vel_x &lt; X_VEL_MIN)
+        return 0;
+
+    if (lander_vel_x &gt; X_VEL_MAX)
+        return 0;
+    
+    return main_on * MAIN_ENGINE_POWER * sin(lander_angle) / MASS;
+}
+
+double ang_acc() {
+    if (lander_angle_vel &lt; ANG_VEL_MIN)
+        return 0;
+
+    if (lander_angle_vel &gt; ANG_VEL_MAX)
+        return 0;
+
+    if (left_on)
+        return -SIDE_ENGINE_POWER / MOI;
+
+    if (right_on)
+        return SIDE_ENGINE_POWER / MOI;
+
+    return 0;
+}
+
+double y_vel() {
+    if (lander_pos_y &lt; Y_POS_MIN)
+        return 0;
+    
+    if (lander_pos_y &gt; Y_POS_MAX)
+        return 0;
+
+    return lander_vel_y;
+}
+
+double x_vel() {
+    if (lander_pos_x &lt; X_POS_MIN)
+        return 0;
+    
+    if (lander_pos_x &gt; X_POS_MAX)
+        return 0;
+
+    return lander_vel_x;
+}
+
+double ang_vel() {
+    if (lander_angle &lt; MIN_ANGLE)
+        return 0;
+    
+    if (lander_angle &gt; MAX_ANGLE)
+        return 0;
+
+    return lander_angle_vel;
+}
+</declaration>
 	<template>
 		<name x="5" y="5">Agent</name>
 		<declaration>//Clock for agent
@@ -152,6 +254,7 @@ t'==10</label>
 		<location id="id8" x="-442" y="552">
 		</location>
 		<location id="id9" x="-442" y="212">
+			<committed/>
 		</location>
 		<init ref="id7"/>
 		<transition id="id10">
@@ -189,6 +292,7 @@ t'==10</label>
 		<transition id="id14">
 			<source ref="id9"/>
 			<target ref="id8"/>
+			<label kind="assignment" x="-467" y="382">flying()</label>
 		</transition>
 		<transition id="id15" controllable="false">
 			<source ref="id7"/>
