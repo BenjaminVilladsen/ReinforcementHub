@@ -13,7 +13,7 @@ const double PI = 3.1415;
 const double MAIN_ENGINE_POWER = 13.0;
 const double SIDE_ENGINE_POWER = 0.6;
 const double MASS = 6.40;
-const double MOI = (1/6) * MASS * sqrt(34); //We calculate MOI of a square with sides the length of the bottom of the lander.
+const double MOI = (1.0/6.0) * MASS * (34*34); //We calculate MOI of a square with sides the length of the bottom of the lander.
 const double GROUND_LEVEL = 0;
 
 //Thresholds
@@ -59,16 +59,25 @@ const double LANDER_POLY[14][2] = {
 ///State handling_______________________________________________________
 double globalState[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
-void updateState() {
+void update_state() {
     globalState[0] = lander_pos_x;
     globalState[1] = lander_pos_y;
     globalState[2] = lander_vel_x;
     globalState[3] = lander_vel_y;
     globalState[4] = lander_angle;
     globalState[5] = lander_angle_vel;
-    globalState[6] = touch == 2 ? 1 : 0;
-    globalState[7] = touch == 1 ? 1 : 0;
+    globalState[6] = touch == 2 || touch == 3;
+    globalState[7] = touch == 1 || touch == 3;
 }
+
+///Reward handling_______________________________________________________
+double rewardShape;
+
+double update_reward_shape() {
+    
+}
+
+
 
 
 
@@ -103,6 +112,7 @@ void clip_all() {
 //Function for clipping all values
 void flying() {
     clip_all();
+    update_state();
 }
 
 //Function for activating a specific engine
@@ -127,6 +137,63 @@ void activate_engine(int engine) {
         left_on = false;
         right_on = false;
     }
+}
+
+// Function to check leg and body contact with the ground
+int check_ground_contact() {
+    bool left_leg_contact = false;
+    bool right_leg_contact = false;
+    bool body_contact = false;
+
+    double rx, ry; // Variables to hold rotated coordinates
+    int i;
+
+    // Check contact for the body
+    for (i = 0; i &lt; 6; i++) {
+        rx = cos(lander_angle) * LANDER_POLY[i][0] - sin(lander_angle) * LANDER_POLY[i][1] + lander_pos_x;
+        ry = sin(lander_angle) * LANDER_POLY[i][0] + cos(lander_angle) * LANDER_POLY[i][1] + lander_pos_y;
+
+        if (ry &lt;= GROUND_LEVEL) {
+            body_contact = true;
+        }
+    }
+
+    // Check contact for the left leg if no body contact
+    if (!body_contact) {
+        for (i = 6; i &lt;= 9; i++) {
+            rx = cos(lander_angle) * LANDER_POLY[i][0] - sin(lander_angle) * LANDER_POLY[i][1] + lander_pos_x;
+            ry = sin(lander_angle) * LANDER_POLY[i][0] + cos(lander_angle) * LANDER_POLY[i][1] + lander_pos_y;
+
+            if (ry &lt;= GROUND_LEVEL) {
+                left_leg_contact = true;
+            }
+        }
+    }
+
+    // Check contact for the right leg if no body contact
+    if (!body_contact) {
+        for (i = 10; i &lt;= 13; i++) {
+            rx = cos(lander_angle) * LANDER_POLY[i][0] - sin(lander_angle) * LANDER_POLY[i][1] + lander_pos_x;
+            ry = sin(lander_angle) * LANDER_POLY[i][0] + cos(lander_angle) * LANDER_POLY[i][1] + lander_pos_y;
+
+            if (ry &lt;= GROUND_LEVEL) {
+                right_leg_contact = true;
+            }
+        }
+    }
+
+    // Determine the result based on which parts are contacting
+    if (body_contact) {
+        return 4; // Body is touching
+    } else if (left_leg_contact &amp;&amp; right_leg_contact) {
+        return 3; // Both legs are touching
+    } else if (left_leg_contact) {
+        return 2; // Only left leg is touching
+    } else if (right_leg_contact) {
+        return 1; // Only right leg is touching
+    }
+
+    return 0; // No parts are touching
 }
 
 
@@ -248,53 +315,112 @@ t'==10</label>
 	</template>
 	<template>
 		<name>LunarLander</name>
-		<location id="id7" x="-841" y="552">
+		<location id="id7" x="-1002" y="841">
+			<name x="-1020" y="807">Init</name>
 			<committed/>
 		</location>
-		<location id="id8" x="-442" y="552">
+		<location id="id8" x="-603" y="841">
+			<name x="-577" y="833">Flying1</name>
+			<label kind="invariant" x="-722" y="858">lander_vel_x' == x_acc() &amp;&amp;
+lander_vel_y' == y_acc() &amp;&amp;
+lander_angle_vel' == ang_acc() &amp;&amp;
+lander_pos_x' == x_vel() &amp;&amp;
+lander_pos_y' == y_vel() &amp;&amp;
+lander_angle' == ang_vel()</label>
 		</location>
-		<location id="id9" x="-442" y="212">
+		<location id="id9" x="-603" y="501">
+			<name x="-577" y="484">Flying2</name>
 			<committed/>
+		</location>
+		<location id="id10" x="-603" y="306">
+			<name x="-578" y="298">Ground</name>
+			<label kind="invariant" x="-824" y="340">lander_vel_x' == 0 &amp;&amp;
+lander_vel_y' == 0 &amp;&amp;
+lander_angle_vel' == 0 &amp;&amp;
+lander_pos_x' == 0 &amp;&amp;
+lander_pos_y' == 0 &amp;&amp;
+lander_angle' == 0</label>
+			<committed/>
+		</location>
+		<location id="id11" x="-765" y="187">
+			<name x="-790" y="153">Left</name>
+		</location>
+		<location id="id12" x="-680" y="144">
+			<name x="-697" y="110">Right</name>
+		</location>
+		<location id="id13" x="-552" y="144">
+			<name x="-562" y="110">Both</name>
+		</location>
+		<location id="id14" x="-459" y="187">
+			<name x="-469" y="153">Body</name>
 		</location>
 		<init ref="id7"/>
-		<transition id="id10">
+		<transition id="id15">
+			<source ref="id10"/>
+			<target ref="id14"/>
+			<label kind="guard" x="-510" y="229">touch == 4</label>
+		</transition>
+		<transition id="id16">
+			<source ref="id10"/>
+			<target ref="id13"/>
+			<label kind="guard" x="-586" y="178">touch == 3</label>
+		</transition>
+		<transition id="id17">
+			<source ref="id10"/>
+			<target ref="id12"/>
+			<label kind="guard" x="-722" y="178">touch == 1</label>
+		</transition>
+		<transition id="id18">
+			<source ref="id10"/>
+			<target ref="id11"/>
+			<label kind="guard" x="-799" y="229">touch == 2</label>
+		</transition>
+		<transition id="id19" controllable="false">
+			<source ref="id9"/>
+			<target ref="id10"/>
+			<label kind="select" x="-586" y="357">e: int[1,4]</label>
+			<label kind="guard" x="-586" y="374">check_ground_contact() == e</label>
+			<label kind="assignment" x="-586" y="391">touch = e,
+update_state()</label>
+		</transition>
+		<transition id="id20">
 			<source ref="id8"/>
 			<target ref="id9"/>
-			<label kind="synchronisation" x="-221" y="306">free?</label>
-			<label kind="assignment" x="-221" y="323">activate_engine(0)</label>
-			<nail x="-229" y="501"/>
-			<nail x="-229" y="255"/>
+			<label kind="synchronisation" x="-382" y="595">free?</label>
+			<label kind="assignment" x="-382" y="612">activate_engine(0)</label>
+			<nail x="-390" y="790"/>
+			<nail x="-390" y="544"/>
 		</transition>
-		<transition id="id11">
+		<transition id="id21">
 			<source ref="id8"/>
 			<target ref="id9"/>
-			<label kind="synchronisation" x="-306" y="306">main?</label>
-			<label kind="assignment" x="-416" y="323">activate_engine(1)</label>
-			<nail x="-255" y="484"/>
-			<nail x="-255" y="272"/>
+			<label kind="synchronisation" x="-467" y="595">main?</label>
+			<label kind="assignment" x="-577" y="612">activate_engine(1)</label>
+			<nail x="-416" y="773"/>
+			<nail x="-416" y="561"/>
 		</transition>
-		<transition id="id12">
+		<transition id="id22">
 			<source ref="id8"/>
 			<target ref="id9"/>
-			<label kind="synchronisation" x="-722" y="306">right?</label>
-			<label kind="assignment" x="-824" y="323">activate_engine(3)</label>
-			<nail x="-663" y="510"/>
-			<nail x="-663" y="255"/>
+			<label kind="synchronisation" x="-883" y="595">right?</label>
+			<label kind="assignment" x="-985" y="612">activate_engine(3)</label>
+			<nail x="-824" y="799"/>
+			<nail x="-824" y="544"/>
 		</transition>
-		<transition id="id13">
+		<transition id="id23">
 			<source ref="id8"/>
 			<target ref="id9"/>
-			<label kind="synchronisation" x="-629" y="306">left?</label>
-			<label kind="assignment" x="-629" y="323">activate_engine(2)</label>
-			<nail x="-637" y="493"/>
-			<nail x="-637" y="272"/>
+			<label kind="synchronisation" x="-790" y="595">left?</label>
+			<label kind="assignment" x="-790" y="612">activate_engine(2)</label>
+			<nail x="-798" y="782"/>
+			<nail x="-798" y="561"/>
 		</transition>
-		<transition id="id14">
+		<transition id="id24">
 			<source ref="id9"/>
 			<target ref="id8"/>
-			<label kind="assignment" x="-467" y="382">flying()</label>
+			<label kind="assignment" x="-629" y="671">flying()</label>
 		</transition>
-		<transition id="id15" controllable="false">
+		<transition id="id25" controllable="false">
 			<source ref="id7"/>
 			<target ref="id8"/>
 		</transition>
