@@ -1,7 +1,10 @@
 import gymnasium as gym
 from config_and_helpers import discretize, epsilon_greedy_policy, n_bins, state_bounds, Q
 
+from playsound import playsound
+
 def run_simulation(episodes=100, render_mode="human"):
+
     env = gym.make("LunarLander-v2", continuous=False, gravity=-10.0, enable_wind=False, wind_power=15.0,
                    turbulence_power=1.5, render_mode=render_mode)
     for i in range(episodes):
@@ -17,6 +20,8 @@ def run_simulation(episodes=100, render_mode="human"):
 
             if done or truncated:
                 print(f"Simulation episode {i + 1}: Reward: {total_reward}")
+                if (total_reward > 200):
+                    playsound('sound.mp3')
                 break
 
 if __name__ == "__main__":
