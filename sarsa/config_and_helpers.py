@@ -5,12 +5,13 @@ import gymnasium as gym
 #            HYPERPARAMETERS / TRAINING OPTIONS            #
 ############################################################
 
-alpha_values = [0.1]  # Learning rate values to experiment with
-gamma_values = [0.99]  # Discount factor values for future rewards
+alpha_values = [0.3]  # Learning rate values to experiment with
+gamma_values = [0.9]  # Discount factor values for future rewards high -> more exploration, low -> less exploration
 epsilon_decay_values = [0.9]  # Epsilon decay rates for the epsilon-greedy policy
-n_episodes = 20_000  # Number of episodes to train the simulation
+n_episodes = 10_000  # Number of episodes to train the simulation
 n_bins = 10  # Number of bins for discretizing each state dimension
-n = 6
+n = 3
+log_interval = 200
 
 
 env = gym.make("LunarLander-v2", continuous=False, gravity=-10.0, enable_wind=False, wind_power=15.0,

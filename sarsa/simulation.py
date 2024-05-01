@@ -1,7 +1,10 @@
 import gymnasium as gym
 from config_and_helpers import discretize, epsilon_greedy_policy, n_bins, state_bounds, Q
-
 from playsound import playsound
+
+############################################################
+#                FOR RUNNING THE SIMULATION                #
+############################################################
 
 def run_simulation(episodes=100, render_mode="human"):
 

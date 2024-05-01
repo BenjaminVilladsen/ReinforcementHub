@@ -9,3 +9,5 @@ sarsa/best_policy_20240501-105847.json
 sarsa/best_policy_20240501-105847.pkl
 sarsa/best_policies/best_policy_20240501-130353.json
 sarsa/best_policy_20240501-130353.pkl
+*.pyc
+*.pkl
