@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.6//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_6.dtd'>
+<nta>
+	<declaration>//Channels for the agent to emit
+broadcast chan left, right, main, free;
+
+//Engine statuses
+bool main_on=false, left_on=false, right_on=false;
+
+//Constants
+const double GRAVITY = -10.0;
+const double PI = 3.1415;
+const double MAIN_ENGINE_POWER = 13.0;
+const double SIDE_ENGINE_POWER = 0.6;
+const double MASS = 6.40;
+const double GROUND_LEVEL = 0;
+
+//Thresholds
+const double X_POS_MIN = 0;
+const double X_POS_MAX = 75;
+const double Y_POS_MIN = 0;
+const double Y_POS_MAX = 75;
+const double X_VEL_MAX = 10;
+const double X_VEL_MIN = -10;
+const double Y_VEL_MAX = 10;
+const double Y_VEL_MIN = -10;
+const double MIN_ANGLE = -2*PI;
+const double MAX_ANGLE = 2*PI;
+const double ANG_VEL_MIN = -5;
+const double ANG_VEL_MAX = 5;
+
+///Lander properties_______________________________________________________
+clock lander_pos_x=37.5, lander_pos_y=45, lander_vel_x=0, lander_vel_y=0, lander_angle=0, lander_angle_vel=0;
+int touch;
+const double LANDER_POLY[14][2] = {
+    //Lander body
+    {-14,  17},
+    {-17,   0},
+    {-17, -10},
+    { 17, -10},
+    { 17,   0},
+    { 14,  17},
+
+    //Left leg
+    {-21.16, - 1.55}, //TL
+    {-17.22, - 2.24}, //TR
+    {-23.94, -17.31}, //BL
+    {-20.00,  -18.00}, //BR
+
+    //Right leg
+    {17.22, -2.24},
+    {21.16, -1.55},
+    {20.00,-18.00},
+    {23.94, -17.31}
+};
+
+
+///State handling_______________________________________________________
+double globalState[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+
+void updateState() {
+    globalState[0] = lander_pos_x;
+    globalState[1] = lander_pos_y;
+    globalState[2] = lander_vel_x;
+    globalState[3] = lander_vel_y;
+    globalState[4] = lander_angle;
+    globalState[5] = lander_angle_vel;
+    globalState[6] = touch == 2 ? 1 : 0;
+    globalState[7] = touch == 1 ? 1 : 0;
+}
+
+
+
+///Various functions_______________________________________________________
+//Function for activating a specific engine
+void activate_engine(int engine) {
+    if (engine == 1) {
+        main_on = true;
+        left_on = false;
+        right_on = false;
+    } 
+    else if (engine == 2) {
+        main_on = false;
+        left_on = true;
+        right_on = false;
+    } 
+    else if (engine == 3) {
+        main_on = false;
+        left_on = false;
+        right_on = true;
+    } 
+    else {
+        main_on = false;
+        left_on = false;
+        right_on = false;
+    }
+}</declaration>
+	<template>
+		<name x="5" y="5">Agent</name>
+		<declaration>//Clock for agent
+clock t;</declaration>
+		<location id="id0" x="-297" y="0">
+			<name x="-331" y="-34">A</name>
+			<label kind="invariant" x="-374" y="8">t&lt;=1 &amp;&amp;
+t'==10</label>
+		</location>
+		<location id="id1" x="204" y="0">
+			<name x="212" y="-25">B</name>
+			<committed/>
+		</location>
+		<init ref="id0"/>
+		<transition id="id2">
+			<source ref="id1"/>
+			<target ref="id0"/>
+			<label kind="synchronisation" x="-68" y="68">left!</label>
+			<nail x="-51" y="102"/>
+		</transition>
+		<transition id="id3">
+			<source ref="id1"/>
+			<target ref="id0"/>
+			<label kind="synchronisation" x="-68" y="136">right!</label>
+			<nail x="204" y="68"/>
+			<nail x="-51" y="170"/>
+			<nail x="-297" y="76"/>
+		</transition>
+		<transition id="id4">
+			<source ref="id1"/>
+			<target ref="id0"/>
+			<label kind="synchronisation" x="-68" y="-187">free!</label>
+			<nail x="204" y="-68"/>
+			<nail x="-51" y="-170"/>
+			<nail x="-297" y="-59"/>
+		</transition>
+		<transition id="id5">
+			<source ref="id1"/>
+			<target ref="id0"/>
+			<label kind="synchronisation" x="-68" y="-119">main!</label>
+			<nail x="-51" y="-102"/>
+		</transition>
+		<transition id="id6" controllable="false">
+			<source ref="id0"/>
+			<target ref="id1"/>
+			<label kind="guard" x="-110" y="0">t==1</label>
+			<label kind="assignment" x="-17" y="0">t=0.0</label>
+		</transition>
+	</template>
+	<template>
+		<name>LunarLander</name>
+		<location id="id7" x="-841" y="552">
+			<committed/>
+		</location>
+		<location id="id8" x="-442" y="552">
+		</location>
+		<location id="id9" x="-442" y="212">
+		</location>
+		<init ref="id7"/>
+		<transition id="id10">
+			<source ref="id8"/>
+			<target ref="id9"/>
+			<label kind="synchronisation" x="-221" y="306">free?</label>
+			<label kind="assignment" x="-221" y="323">activate_engine(0)</label>
+			<nail x="-229" y="501"/>
+			<nail x="-229" y="255"/>
+		</transition>
+		<transition id="id11">
+			<source ref="id8"/>
+			<target ref="id9"/>
+			<label kind="synchronisation" x="-306" y="306">main?</label>
+			<label kind="assignment" x="-416" y="323">activate_engine(1)</label>
+			<nail x="-255" y="484"/>
+			<nail x="-255" y="272"/>
+		</transition>
+		<transition id="id12">
+			<source ref="id8"/>
+			<target ref="id9"/>
+			<label kind="synchronisation" x="-722" y="306">right?</label>
+			<label kind="assignment" x="-824" y="323">activate_engine(3)</label>
+			<nail x="-663" y="510"/>
+			<nail x="-663" y="255"/>
+		</transition>
+		<transition id="id13">
+			<source ref="id8"/>
+			<target ref="id9"/>
+			<label kind="synchronisation" x="-629" y="306">left?</label>
+			<label kind="assignment" x="-629" y="323">activate_engine(2)</label>
+			<nail x="-637" y="493"/>
+			<nail x="-637" y="272"/>
+		</transition>
+		<transition id="id14">
+			<source ref="id9"/>
+			<target ref="id8"/>
+		</transition>
+		<transition id="id15" controllable="false">
+			<source ref="id7"/>
+			<target ref="id8"/>
+		</transition>
+	</template>
+	<system>system Agent, LunarLander;
+</system>
+	<queries>
+		<query>
+			<formula/>
+			<comment/>
+		</query>
+	</queries>
+</nta>
