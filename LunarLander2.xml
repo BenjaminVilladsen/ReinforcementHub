@@ -71,10 +71,19 @@ void update_state() {
 }
 
 ///Reward handling_______________________________________________________
-double rewardShape;
+clock cost_shape;
 
-double update_reward_shape() {
+void update_reward_shape() {
     
+}
+
+double shaping_maerke() {
+    double a = 100 * sqrt(globalState[0] * globalState[0] + globalState[1] * globalState[1]);
+    double b = 100 * sqrt(globalState[2] * globalState[2] + globalState[3] * globalState[3]);
+    double c = 100 * fabs(globalState[4]);
+    double d = -10 * globalState[6];
+    double e = -10 * globalState[7]; 
+    return a + b + c + d + e;
 }
 
 
@@ -326,7 +335,8 @@ lander_vel_y' == y_acc() &amp;&amp;
 lander_angle_vel' == ang_acc() &amp;&amp;
 lander_pos_x' == x_vel() &amp;&amp;
 lander_pos_y' == y_vel() &amp;&amp;
-lander_angle' == ang_vel()</label>
+lander_angle' == ang_vel() &amp;&amp;
+cost_shape' == shaping_maerke()</label>
 		</location>
 		<location id="id9" x="-603" y="501">
 			<name x="-577" y="484">Flying2</name>
@@ -334,7 +344,7 @@ lander_angle' == ang_vel()</label>
 		</location>
 		<location id="id10" x="-603" y="306">
 			<name x="-578" y="298">Ground</name>
-			<label kind="invariant" x="-824" y="340">lander_vel_x' == 0 &amp;&amp;
+			<label kind="invariant" x="-824" y="323">lander_vel_x' == 0 &amp;&amp;
 lander_vel_y' == 0 &amp;&amp;
 lander_angle_vel' == 0 &amp;&amp;
 lander_pos_x' == 0 &amp;&amp;
