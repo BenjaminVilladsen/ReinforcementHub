@@ -10,6 +10,7 @@ def run_simulation(episodes=100, render_mode="human"):
 
     env = gym.make("LunarLander-v2", continuous=False, gravity=-10.0, enable_wind=False, wind_power=15.0,
                    turbulence_power=1.5, render_mode=render_mode)
+    env.render_mode
     for i in range(episodes):
         observation, info = env.reset()
         state = discretize(observation, n_bins, state_bounds)
@@ -23,7 +24,7 @@ def run_simulation(episodes=100, render_mode="human"):
 
             if done or truncated:
                 print(f"Simulation episode {i + 1}: Reward: {total_reward}")
-                if (total_reward > 200):
+                if total_reward > 200:
                     playsound('sound.mp3')
                 break
 
