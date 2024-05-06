@@ -11,10 +11,13 @@ bool main_on=false, left_on=false, right_on=false;
 const double GRAVITY = -10.0;
 const double PI = 3.1415;
 const double MAIN_ENGINE_POWER = 13.0;
-const double SIDE_ENGINE_POWER = 0.6;
+const double SIDE_ENGINE_POWER = 0.6; //0.6
 const double MASS = 6.40;
 const double MOI = (1.0/6.0) * MASS * (34*34); //We calculate MOI of a square with sides the length of the bottom of the lander.
 const double GROUND_LEVEL = 0;
+
+//Side engines
+const double SIDE_ENGINE_HEIGHT = 14;
 
 //Thresholds
 const double X_POS_MIN = 0;
@@ -73,11 +76,7 @@ void update_state() {
 ///Reward handling_______________________________________________________
 clock cost_shape;
 
-void update_reward_shape() {
-    
-}
-
-double shaping_maerke() {
+double cost_maerke() {
     double a = 100 * sqrt(globalState[0] * globalState[0] + globalState[1] * globalState[1]);
     double b = 100 * sqrt(globalState[2] * globalState[2] + globalState[3] * globalState[3]);
     double c = 100 * fabs(globalState[4]);
@@ -235,10 +234,10 @@ double ang_acc() {
         return 0;
 
     if (left_on)
-        return -SIDE_ENGINE_POWER / MOI;
+        return -SIDE_ENGINE_POWER * SIDE_ENGINE_HEIGHT / MOI;
 
     if (right_on)
-        return SIDE_ENGINE_POWER / MOI;
+        return SIDE_ENGINE_POWER * SIDE_ENGINE_HEIGHT / MOI;
 
     return 0;
 }
@@ -336,7 +335,7 @@ lander_angle_vel' == ang_acc() &amp;&amp;
 lander_pos_x' == x_vel() &amp;&amp;
 lander_pos_y' == y_vel() &amp;&amp;
 lander_angle' == ang_vel() &amp;&amp;
-cost_shape' == shaping_maerke()</label>
+cost_shape' == cost_maerke()</label>
 		</location>
 		<location id="id9" x="-603" y="501">
 			<name x="-577" y="484">Flying2</name>
