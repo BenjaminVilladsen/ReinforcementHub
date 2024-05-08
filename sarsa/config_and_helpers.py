@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 alpha = 0.3  # Learning rate values to experiment with
 gamma = 0.9  # Discount factor values for future rewards high -> more exploration, low -> less exploration
 n_episodes = 1000  # Number of episodes to train the simulation
-n_bins = 10  # Number of bins for discretizing each state dimension
+n_bins = 5 # Number of bins for discretizing each state dimension
 n = 3
 init_epsilon = 0.9
 epsilon_decay = 0.99999
@@ -31,38 +31,46 @@ def initializeQAndEnv():
                    turbulence_power=1.5)  # Environment setup
 
     nA = env.action_space.n  # Number of possible actions
-    Q =  np.zeros((n_bins,) * 8 + (nA,))  # Initialize the Q-table with all zeros
+    Q = np.zeros((n_bins,) * 8 + (nA,))  # Initialize the Q-table with all zeros
+    return Q, env, nA
+
+def initializeQAndEnv():
+    """
+    Initialize Q-table and environment.
+
+    Returns:
+        Q (np.array): Initialized Q-table.
+        env: Gym environment.
+        nA (int): Number of actions.
+    """
+    env = gym.make("LunarLander-v2")
+    nA = env.action_space.n
+    n_bins = 5
+    n_states = [n_bins] * env.observation_space.shape[0]
+    Q = np.zeros(n_states + [nA])
     return Q, env, nA
 
 
-def discretize(observation, bins, bounds):
+#write a discretizie function
+def discretize(observation, n_bins, bounds):
     """
-    Convert a list of continuous observation values into discrete indices based on specified bins and bounds.
+    Discretize the continuous state into a discrete state.
 
     Parameters:
-        observation (list or tuple): The current observation from the environment that needs discretization.
-        bins (int): The number of bins to use for discretization for each observation component.
-        bounds (list of tuples): Each tuple contains the (min, max) bounds for each component of the observation.
+        observation (np.array): The continuous state.
+        n_bins (int): Number of bins to use.
+        bounds (list): List of tuples with the lower and upper bounds for each dimension.
 
     Returns:
-        tuple: A tuple of indices representing the discretized state.
+        tuple: The discretized state.
     """
-    discretized = []
-    for obs, (low, high) in zip(observation, bounds):
-        # Clip the observation within the bounds to handle edge cases.
-        clipped_obs = max(low, min(high, obs))
+    state = []
+    for i, x in enumerate(observation):
+        l, u = bounds[i]
+        state.append(int(np.digitize(x, np.linspace(l, u, n_bins))))
+    return tuple(state)
 
-        # Scale the clipped observation to the range [0, bins)
-        scale = (clipped_obs - low) / (high - low) * bins
 
-        # Convert to an integer bin index, ensuring it does not reach 'bins'
-        index = int(scale)
-
-        # Due to the nature of int() truncation, we need to handle the edge case where scaled value is exactly 'bins'
-        index = min(index, bins - 1)
-
-        discretized.append(index)
-    return tuple(discretized)
 
 
 def epsilon_greedy_policy(state, Q_policy, epsilon, env):

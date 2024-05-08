@@ -1,5 +1,6 @@
 import time
 from grid_search import grid_search, params_grid, fixed_params
+from simple_sarsa import sarsa
 from training import train
 from simulation import run_simulation
 from file_operations import load_policy, store_policy
@@ -14,6 +15,7 @@ def main():
     choice = input(
         "Do you want to train a new model or load an existing one? Enter 'train', 'load' or 'grid_search': ").strip().lower()
     if choice == 'train':
+        """
         Q_Sim, _ = train(
             n=n,
             alpha=alpha,
@@ -24,6 +26,8 @@ def main():
             init_epsilon=init_epsilon,
             min_epsilon=min_epsilon,
             epsilon_decay=epsilon_decay)
+        """
+        sarsa(num_episodes=1000, alpha=alpha, gamma=gamma, epsilon=init_epsilon)
     elif choice == 'load':
         filename = input("Please enter the filename of the saved model: ")
         loaded_data = load_policy(filename)
@@ -42,8 +46,9 @@ def main():
     else:
         print("Invalid input. Exiting.")
         return
-
+    return
     run_simulation(policy_Q=Q_Sim) # run the simulation
 
 if __name__ == "__main__":
     main()
+
