@@ -12,7 +12,7 @@ const double GRAVITY = -10.0;
 const double PI = 3.1415;
 const double MAIN_ENGINE_POWER = 13.0;
 const double SIDE_ENGINE_POWER = 0.6; //0.6
-const double MASS = 6.40;
+const double MASS = 1;
 const double MOI = (1.0/6.0) * MASS * (34*34); //We calculate MOI of a square with sides the length of the bottom of the lander.
 const double GROUND_LEVEL = 0;
 
@@ -227,6 +227,7 @@ double x_acc() {
 }
 
 double ang_acc() {
+      return 0;
     if (lander_angle_vel &lt; ANG_VEL_MIN)
         return 0;
 
@@ -279,7 +280,7 @@ clock t;</declaration>
 		<location id="id0" x="-297" y="0">
 			<name x="-331" y="-34">A</name>
 			<label kind="invariant" x="-374" y="8">t&lt;=1 &amp;&amp;
-t'==10</label>
+t'==50</label>
 		</location>
 		<location id="id1" x="204" y="0">
 			<name x="212" y="-25">B</name>
@@ -396,7 +397,7 @@ update_state()</label>
 			<source ref="id8"/>
 			<target ref="id9"/>
 			<label kind="synchronisation" x="-382" y="595">free?</label>
-			<label kind="assignment" x="-382" y="612">activate_engine(0)</label>
+			<label kind="assignment" x="-382" y="612">activate_engine(3)</label>
 			<nail x="-390" y="790"/>
 			<nail x="-390" y="544"/>
 		</transition>
@@ -404,7 +405,7 @@ update_state()</label>
 			<source ref="id8"/>
 			<target ref="id9"/>
 			<label kind="synchronisation" x="-467" y="595">main?</label>
-			<label kind="assignment" x="-577" y="612">activate_engine(1)</label>
+			<label kind="assignment" x="-577" y="612">activate_engine(3)</label>
 			<nail x="-416" y="773"/>
 			<nail x="-416" y="561"/>
 		</transition>
@@ -420,14 +421,15 @@ update_state()</label>
 			<source ref="id8"/>
 			<target ref="id9"/>
 			<label kind="synchronisation" x="-790" y="595">left?</label>
-			<label kind="assignment" x="-790" y="612">activate_engine(2)</label>
+			<label kind="assignment" x="-790" y="612">activate_engine(3)</label>
 			<nail x="-798" y="782"/>
 			<nail x="-798" y="561"/>
 		</transition>
 		<transition id="id24">
 			<source ref="id9"/>
 			<target ref="id8"/>
-			<label kind="assignment" x="-629" y="671">flying()</label>
+			<label kind="assignment" x="-629" y="671">flying(),
+lander_angle_vel = lander_angle_vel + SIDE_ENGINE_POWER * SIDE_ENGINE_HEIGHT / MOI</label>
 		</transition>
 		<transition id="id25" controllable="false">
 			<source ref="id7"/>
