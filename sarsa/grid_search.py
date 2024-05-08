@@ -49,19 +49,19 @@ def grid_search(params_grid, **fixed_params):
 
 # Define the grid of hyperparameters to search over
 params_grid = {
-    'alpha': [0.1, 0.2],
-    'gamma': [0.9, 0.6],
-    'n': [3, 8],
+    'alpha': [0.01, 0.3],
+    'gamma': [0.6, 0.3],
+    'n': [3, 10],
+    'epsilon_decay': [1, 0.7],
+    'min_epsilon': [0.01, 0.2]
 }
 
 # Fixed parameters
 fixed_params = {
-    'n_episodes': 800,
+    'n_episodes': 1000,
     'log_interval': 200,
     'max_time_steps': 2000,
-    'min_epsilon': 0.2,
     'init_epsilon': 0.9,
-    'epsilon_decay': 0.9999
 }
 
 
