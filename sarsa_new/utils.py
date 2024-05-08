@@ -16,4 +16,3 @@ def print_text_with_border(text: str, px=10, py=1) -> None:
     #print the bottom border
     print(f"+{'-' * (len(text) + px)}+")
 
-

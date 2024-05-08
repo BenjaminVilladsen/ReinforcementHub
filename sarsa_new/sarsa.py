@@ -6,6 +6,8 @@ from config_lunar_lander import num_episodes, num_bins, epsilon, gamma, alpha
 def sarsa(epsilon_greedy_policy_fn, discretize_fn, q_table, env, state_bounds):
     bins = [np.linspace(b[0], b[1], num_bins) for b in state_bounds]
 
+    episode_rewards = []
+
     for episode in range(num_episodes):
         initial_state = env.reset()
         current_state = discretize_fn(initial_state, bins)
@@ -29,8 +31,9 @@ def sarsa(epsilon_greedy_policy_fn, discretize_fn, q_table, env, state_bounds):
 
         if episode % 100 == 0:
             print(episode_reward)
+        episode_rewards.append(episode_reward)
 
     env.close()
-    return q_table
+    return q_table, episode_rewards
 
 print("DONE")
