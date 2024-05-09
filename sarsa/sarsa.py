@@ -4,11 +4,9 @@ import gym
 from utils import print_episode_stats
 
 
-def sarsa(epsilon_greedy_policy_fn, discretize_fn, q_table, env, settings):
-    bins = [np.linspace(b[0], b[1], settings['num_bins']) for b in settings['state_bounds']]
+def sarsa(epsilon_greedy_policy_fn, discretize_fn, print_fn, q_table, env, settings, bins):
 
     episode_rewards = []
-
     for episode in range(settings['num_episodes']):
         initial_state = env.reset()
         current_state = discretize_fn(initial_state, bins)

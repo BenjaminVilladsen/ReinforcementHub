@@ -1,33 +1,36 @@
 import time
 
 from sarsa import sarsa
-from config import settings_lander
-from helpers import epsilon_greedy_policy, discretize_state, init_q, init_lander_env
+from config import settings_lander, settings_car
+from helpers import epsilon_greedy_policy, discretize_state, init_q, init_lander_env, init_mountaincar_env, \
+    init_q_mountaincar, discretize_state_mountaincar, mountain_car_epsilon_greedy_policy
 from file_handling import store_policy, load_policy
-from simulate import lander_simulation
-from utils import print_text_with_border, plot_rewards
+from simulate import lander_simulation, mountain_car_simulation
+from utils import print_text_with_border, plot_rewards, print_episode_stats
 import numpy as np
 
 
 def main():
-    env = init_lander_env()
-    Q = init_q(num_bins=settings_lander['num_bins'], env=env)
-    print_text_with_border("REINFORCEMENT HUB", px=40, py=2)
+    env = init_mountaincar_env()
+    Q, bins = init_q_mountaincar(env=env, settings=settings_car)
+    print_text_with_border("REINFORCEMENT HUB - MOUNTAIN CAR", px=40, py=2)
     choice = input(
             "What do you want to do? train ('t'), load ('l'), load_and_train ('lt') or grid_search('gs'): ").strip().lower()
 
     if choice == 't':
         print_text_with_border("TRAIN MODEL", px=40, py=0)
         Q, episode_rewards = sarsa(
-            epsilon_greedy_policy_fn=epsilon_greedy_policy,
-            discretize_fn=discretize_state,
+            epsilon_greedy_policy_fn=mountain_car_epsilon_greedy_policy,
+            discretize_fn=discretize_state_mountaincar,
             q_table=Q,
             env=env,
-            settings=settings_lander
+            settings=settings_car,
+            bins=bins,
+            print_fn=print_episode_stats
         )
 
-        filename = f"best_policy_{np.mean(episode_rewards)}_{time.strftime('%Y%m%d-%H%M%S')}.pkl"
-        store_policy(filename, Q, settings_lander)
+        filename = f"mc_best_policy_{np.mean(episode_rewards)}_{time.strftime('%Y%m%d-%H%M%S')}.pkl"
+        store_policy(filename, Q, settings_car)
 
         #plot rewards
         plot_rewards(episode_rewards)
@@ -40,14 +43,16 @@ def main():
         loaded_settings['num_episodes'] = episodes_num
         Q[:] = loaded_q
         Q_trained, episode_rewards = sarsa(
-            epsilon_greedy_policy_fn=epsilon_greedy_policy,
-            discretize_fn=discretize_state,
+            epsilon_greedy_policy_fn=mountain_car_epsilon_greedy_policy,
+            discretize_fn=discretize_state_mountaincar,
             q_table=Q,
             env=env,
-            settings=loaded_settings
+            settings=settings_car,
+            bins=bins,
+            print_fn=print_episode_stats
         )
         Q = Q_trained
-        filename = f"updated_best_policy_{np.mean(episode_rewards)}_{time.strftime('%Y%m%d-%H%M%S')}.pkl"
+        filename = f"mc_updated_best_policy_{np.mean(episode_rewards)}_{time.strftime('%Y%m%d-%H%M%S')}.pkl"
         store_policy(filename, Q, settings_lander)
         plot_rewards(episode_rewards)
 
@@ -64,7 +69,7 @@ def main():
 
     simulate = input("Do you want to simulate the model? (y/n): ").strip().lower()
     if simulate == 'y':
-        lander_simulation(Q)
+        mountain_car_simulation(Q, bins=bins)
     else:
         print_text_with_border("EXITING", px=40, py=0)
 

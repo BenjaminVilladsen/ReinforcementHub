@@ -33,10 +33,10 @@ def print_episode_stats(episode_rewards, i_episode, episode_span=100):
     avg_reward = np.mean(episode_rewards[-episode_span:])
     num_episodes_passed = len([r for r in episode_rewards[-episode_span:] if r >= 200])
     num_episodes_failed = episode_span - num_episodes_passed
-    success_rate = f"{num_episodes_passed / episode_span * 100:.2f%}"
+    success_rate = f"{num_episodes_passed / episode_span * 100}"
 
-    best_reward = f"{np.max(episode_rewards[-episode_span:]):.2f%}"
-    worst_reward = f"{np.min(episode_rewards[-episode_span:])::.2f%}"
+    best_reward = f"{np.max(episode_rewards[-episode_span:])}"
+    worst_reward = f"{np.min(episode_rewards[-episode_span:])}"
 
     console = Console()
     table = Table(title=f"Episode {i_episode}", title_style="bold blue", show_header=True, header_style="bold magenta")

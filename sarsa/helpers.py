@@ -4,16 +4,18 @@ import gym
 
 def init_lander_env():
     env = gym.make('LunarLander-v2')
+
     return env
 def epsilon_greedy_policy(state, epsilon, env, q_table):
     return np.random.choice(env.action_space.n) if np.random.rand() < epsilon else np.argmax(q_table[state])
 
 
-def init_q(num_bins, env):
+def init_q(env, settings):
     # Initialize the Q-table
-    q_table_dimensions = [num_bins] * 6 + [2] * 2 + [env.action_space.n]
+    q_table_dimensions = [settings['num_bins']] * 6 + [2] * 2 + [env.action_space.n]
     q_table = np.zeros(q_table_dimensions)
-    return q_table
+    bins = [np.linspace(b[0], b[1], settings['num_bins']) for b in settings['state_bounds']]
+    return q_table, bins
 
 def discretize_state(state, bins):
     """
@@ -32,3 +34,55 @@ def discretize_state(state, bins):
     # Append boolean components directly as integers
     discretized.extend([int(state_array[i]) for i in range(6, 8)])
     return tuple(discretized)
+
+
+
+###################
+#MOUNTAINCAR
+
+def init_mountaincar_env():
+    env = gym.make('MountainCar-v0')
+    return env
+
+def init_q_mountaincar(env, settings):
+    # Correct the bins for velocity to match the expected range of the environment
+    position_bins = np.linspace(-1.2, 0.6, settings["num_bins"] + 1)  # discretize position with appropriate coverage
+    velocity_bins = np.linspace(-0.07, 0.07, settings["num_bins"] + 1)  # CORRECTED: discretize velocity within actual expected range
+
+    # Initialize the Q-table
+    q_table_dimensions = [settings["num_bins"]] * 2 + [env.action_space.n]
+    q_table = np.zeros(q_table_dimensions)
+
+    # Store bins for later use in discretization (optional, if needed outside init)
+    q_table_bins = (position_bins, velocity_bins)
+
+    return q_table, q_table_bins
+
+
+
+def discretize_state_mountaincar(state, bins):
+    """
+    Discretize the continuous state components of the Mountain Car environment.
+    """
+    if isinstance(state, tuple):
+        state_array = state[0]  # Extract the array from the tuple
+    else:
+        state_array = state  # Directly use the array
+
+        # Discretize each continuous component
+    discretized = [int(np.digitize(state_array[i], bins[i]) - 1) for i in range(2)]
+    # Append boolean components directly as integers
+    return tuple(discretized)
+
+
+def mountain_car_epsilon_greedy_policy(state, epsilon, env, q_table):
+    """
+    Select an action for given state using the epsilon-greedy strategy.
+    """
+
+    if np.random.rand() < epsilon:
+        action = np.random.choice(env.action_space.n)
+    else:
+        # Ensure that `state` is a tuple of (position_index, velocity_index)
+        action = np.argmax(q_table[state[0], state[1], :])  # Access all actions for given state
+    return action
