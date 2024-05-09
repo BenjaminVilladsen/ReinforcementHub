@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from rich.console import Console
+from rich.table import Table
 def print_text_with_border(text: str, px=10, py=1) -> None:
     #half of px and py but as integers
     px_half = int(px / 2)
@@ -17,6 +19,35 @@ def print_text_with_border(text: str, px=10, py=1) -> None:
 
     #print the bottom border
     print(f"+{'-' * (len(text) + px)}+")
+
+
+def print_episode_stats(episode_rewards, i_episode, episode_span=100):
+    """
+    dict of this type:
+    {
+    'num_episode': i_episode + 1,
+    'avg_reward': total_reward,
+    }
+    :return:
+    """
+    avg_reward = np.mean(episode_rewards[-episode_span:])
+    num_episodes_passed = len([r for r in episode_rewards[-episode_span:] if r >= 200])
+    num_episodes_failed = episode_span - num_episodes_passed
+    success_rate = f"{num_episodes_passed / episode_span * 100:.2f%}"
+
+    best_reward = f"{np.max(episode_rewards[-episode_span:]):.2f%}"
+    worst_reward = f"{np.min(episode_rewards[-episode_span:])::.2f%}"
+
+    console = Console()
+    table = Table(title=f"Episode {i_episode}", title_style="bold blue", show_header=True, header_style="bold magenta")
+    table.add_column("Average", style="dim", width=12)
+    table.add_column("Passed")
+    table.add_column("Failed")
+    table.add_column("Percent")
+    table.add_column("Best")
+    table.add_column("Worst")
+    table.add_row(str(avg_reward), str(num_episodes_passed), str(num_episodes_failed), str(success_rate), str(best_reward), str(worst_reward))
+    console.print(table)
 
 
 

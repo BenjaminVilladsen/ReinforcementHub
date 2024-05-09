@@ -8,7 +8,7 @@ settings_lander = {
     "epsilon": 0.1,
     "num_bins": 20,
     "num_episodes": 10_000,
-    "log_interval": 1000,
+    "log_interval": 500,
     "state_bounds": state_bounds_lander
 }
 

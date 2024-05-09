@@ -4,6 +4,7 @@ import gym
 from helpers import discretize_state
 import numpy as np
 from config import settings_lander
+from playsound import playsound
 
 
 def lander_simulation(Q):
@@ -26,4 +27,6 @@ def lander_simulation(Q):
             action = np.argmax(Q[state])
             state, reward, done, _, _ = env.step(action)
             total_reward += reward
+        if total_reward >= 200:
+            playsound('sound.mp3')
         print(f"Total reward: {total_reward}")

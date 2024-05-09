@@ -1,6 +1,8 @@
 import numpy as np
 import gym
 
+from utils import print_episode_stats
+
 
 def sarsa(epsilon_greedy_policy_fn, discretize_fn, q_table, env, settings):
     bins = [np.linspace(b[0], b[1], settings['num_bins']) for b in settings['state_bounds']]
@@ -31,10 +33,11 @@ def sarsa(epsilon_greedy_policy_fn, discretize_fn, q_table, env, settings):
             # Move to the next state and action
             current_state, current_action = next_state, next_action
 
+        episode_rewards.append(episode_reward)
         if episode % settings['log_interval'] == 0 and episode > 0:
             # print average reward the most recent 100 episodes
-            print(f"Episode {episode}: Average reward: {np.mean(episode_rewards[-100:])}")
-        episode_rewards.append(episode_reward)
+            print_episode_stats(episode_rewards[-settings['log_interval']:], i_episode=episode, episode_span=settings['log_interval'])
+
 
     env.close()
     return q_table, episode_rewards

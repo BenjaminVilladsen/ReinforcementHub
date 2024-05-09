@@ -24,7 +24,7 @@ def run_simulation(policy_Q):
             if done or truncated:
                 print(f"Simulation episode {i + 1}: Reward: {total_reward}")
                 if total_reward > 200:
-                    playsound('sound.mp3')
+                    playsound('../sarsa_new/sound.mp3')
                 break
 
 

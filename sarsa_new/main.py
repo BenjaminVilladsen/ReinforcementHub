@@ -37,7 +37,7 @@ def main():
         filename = input("Enter the filename of the saved model (with '.pkl'): ")
         loaded_q, loaded_settings = load_policy(filename)
         episodes_num = int(input("Enter the number of episodes to train: "))
-
+        loaded_settings['num_episodes'] = episodes_num
         Q[:] = loaded_q
         Q_trained, episode_rewards = sarsa(
             epsilon_greedy_policy_fn=epsilon_greedy_policy,
