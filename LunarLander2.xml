@@ -86,9 +86,6 @@ double cost_maerke() {
 }
 
 
-
-
-
 ///Helper functions_______________________________________________________
 //Min function
 double min(double a, double b){
@@ -121,6 +118,12 @@ void clip_all() {
 void flying() {
     clip_all();
     update_state();
+    if(left_on){
+        lander_angle_vel = lander_angle_vel + SIDE_ENGINE_POWER * SIDE_ENGINE_HEIGHT / MOI;
+}
+    if(right_on){
+        lander_angle_vel = lander_angle_vel - SIDE_ENGINE_POWER * SIDE_ENGINE_HEIGHT / MOI;
+}
 }
 
 //Function for activating a specific engine
@@ -204,8 +207,25 @@ int check_ground_contact() {
     return 0; // No parts are touching
 }
 
-
 ///Acceleration and velocities_______________________________________________________
+double x_acc() {
+    if (lander_vel_x &lt;= X_VEL_MIN || lander_vel_x &gt;= X_VEL_MAX)
+        return 0;
+
+    if (main_on) {
+        return MAIN_ENGINE_POWER * sin(lander_angle) / MASS;
+    }
+    
+    if (left_on) {
+        return SIDE_ENGINE_POWER * cos(lander_angle) / MASS;
+    }
+    if (right_on) {
+        return -SIDE_ENGINE_POWER * cos(lander_angle) / MASS;
+    }
+
+    return 0;
+}
+
 double y_acc() {
     if (lander_vel_y &lt;= Y_VEL_MIN)
         return 0;
@@ -213,18 +233,9 @@ double y_acc() {
     if (lander_vel_y &gt;= Y_VEL_MAX)
         return 0;
     
-    return GRAVITY + (main_on * MAIN_ENGINE_POWER * cos(lander_angle)) / MASS;
+    return GRAVITY + (main_on * MAIN_ENGINE_POWER * cos(lander_angle) / MASS) + (left_on * (SIDE_ENGINE_POWER * (lander_angle &gt; 0 ? -1 : 1)) * cos(lander_angle) / MASS) + (right_on * (SIDE_ENGINE_POWER * (lander_angle &gt; 0 ? 1 : -1)) * cos(lander_angle) / MASS);    
 }
 
-double x_acc() {
-    if (lander_vel_x &lt; X_VEL_MIN)
-        return 0;
-
-    if (lander_vel_x &gt; X_VEL_MAX)
-        return 0;
-    
-    return main_on * MAIN_ENGINE_POWER * sin(lander_angle) / MASS;
-}
 
 double ang_acc() {
       return 0;
@@ -272,6 +283,7 @@ double ang_vel() {
 
     return lander_angle_vel;
 }
+
 </declaration>
 	<template>
 		<name x="5" y="5">Agent</name>
@@ -290,7 +302,7 @@ t'==50</label>
 		<transition id="id2">
 			<source ref="id1"/>
 			<target ref="id0"/>
-			<label kind="synchronisation" x="-68" y="68">left!</label>
+			<label kind="synchronisation" x="-68" y="68">main!</label>
 			<nail x="-51" y="102"/>
 		</transition>
 		<transition id="id3">
@@ -312,7 +324,7 @@ t'==50</label>
 		<transition id="id5">
 			<source ref="id1"/>
 			<target ref="id0"/>
-			<label kind="synchronisation" x="-68" y="-119">main!</label>
+			<label kind="synchronisation" x="-68" y="-119">left!</label>
 			<nail x="-51" y="-102"/>
 		</transition>
 		<transition id="id6" controllable="false">
@@ -397,7 +409,7 @@ update_state()</label>
 			<source ref="id8"/>
 			<target ref="id9"/>
 			<label kind="synchronisation" x="-382" y="595">free?</label>
-			<label kind="assignment" x="-382" y="612">activate_engine(3)</label>
+			<label kind="assignment" x="-382" y="612">activate_engine(0)</label>
 			<nail x="-390" y="790"/>
 			<nail x="-390" y="544"/>
 		</transition>
@@ -405,7 +417,7 @@ update_state()</label>
 			<source ref="id8"/>
 			<target ref="id9"/>
 			<label kind="synchronisation" x="-467" y="595">main?</label>
-			<label kind="assignment" x="-577" y="612">activate_engine(3)</label>
+			<label kind="assignment" x="-577" y="612">activate_engine(1)</label>
 			<nail x="-416" y="773"/>
 			<nail x="-416" y="561"/>
 		</transition>
@@ -413,7 +425,7 @@ update_state()</label>
 			<source ref="id8"/>
 			<target ref="id9"/>
 			<label kind="synchronisation" x="-883" y="595">right?</label>
-			<label kind="assignment" x="-985" y="612">activate_engine(3)</label>
+			<label kind="assignment" x="-986" y="612">activate_engine(3)</label>
 			<nail x="-824" y="799"/>
 			<nail x="-824" y="544"/>
 		</transition>
@@ -421,15 +433,14 @@ update_state()</label>
 			<source ref="id8"/>
 			<target ref="id9"/>
 			<label kind="synchronisation" x="-790" y="595">left?</label>
-			<label kind="assignment" x="-790" y="612">activate_engine(3)</label>
+			<label kind="assignment" x="-790" y="612">activate_engine(2)</label>
 			<nail x="-798" y="782"/>
 			<nail x="-798" y="561"/>
 		</transition>
 		<transition id="id24">
 			<source ref="id9"/>
 			<target ref="id8"/>
-			<label kind="assignment" x="-629" y="671">flying(),
-lander_angle_vel = lander_angle_vel + SIDE_ENGINE_POWER * SIDE_ENGINE_HEIGHT / MOI</label>
+			<label kind="assignment" x="-629" y="671">flying()</label>
 		</transition>
 		<transition id="id25" controllable="false">
 			<source ref="id7"/>
