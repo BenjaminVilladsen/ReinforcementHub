@@ -1,40 +1,63 @@
 import time
 
 from sarsa import sarsa
-from config_lunar_lander import state_bounds, num_bins
+from config import settings_lander
 from helpers import epsilon_greedy_policy, discretize_state, init_q, init_lander_env
 from file_handling import store_policy, load_policy
 from simulate import lander_simulation
-from utils import print_text_with_border
+from utils import print_text_with_border, plot_rewards
 import numpy as np
 
 
 def main():
     env = init_lander_env()
-    Q = init_q(num_bins=num_bins, env=env)
+    Q = init_q(num_bins=settings_lander['num_bins'], env=env)
     print_text_with_border("REINFORCEMENT HUB", px=40, py=2)
     choice = input(
-            "What do you want to do? Enter 'train', 'load' or 'grid_search': ").strip().lower()
+            "What do you want to do? train ('t'), load ('l'), load_and_train ('lt') or grid_search('gs'): ").strip().lower()
 
-    if choice == 'train':
+    if choice == 't':
         print_text_with_border("TRAIN MODEL", px=40, py=0)
-        Q, epsiode_rewards = sarsa(
+        Q, episode_rewards = sarsa(
             epsilon_greedy_policy_fn=epsilon_greedy_policy,
             discretize_fn=discretize_state,
             q_table=Q,
             env=env,
-            state_bounds=state_bounds
+            settings=settings_lander
         )
 
-        filename = f"best_policy_{np.mean(epsiode_rewards)}_{time.strftime('%Y%m%d-%H%M%S')}.pkl"
-        store_policy(filename, Q)
+        filename = f"best_policy_{np.mean(episode_rewards)}_{time.strftime('%Y%m%d-%H%M%S')}.pkl"
+        store_policy(filename, Q, settings_lander)
 
+        #plot rewards
+        plot_rewards(episode_rewards)
 
-    elif choice == 'load':
-        print_text_with_border("LOAD MODEL")
+    elif choice == 'lt':
+        print_text_with_border("LOAD AND TRAIN", px=40, py=0)
+        filename = input("Enter the filename of the saved model (with '.pkl'): ")
+        loaded_q, loaded_settings = load_policy(filename)
+        episodes_num = int(input("Enter the number of episodes to train: "))
+
+        Q[:] = loaded_q
+        Q_trained, episode_rewards = sarsa(
+            epsilon_greedy_policy_fn=epsilon_greedy_policy,
+            discretize_fn=discretize_state,
+            q_table=Q,
+            env=env,
+            settings=loaded_settings
+        )
+        Q = Q_trained
+        filename = f"updated_best_policy_{np.mean(episode_rewards)}_{time.strftime('%Y%m%d-%H%M%S')}.pkl"
+        store_policy(filename, Q, settings_lander)
+        plot_rewards(episode_rewards)
+
+    elif choice == 'l':
+        print_text_with_border("LOAD MODEL", px=40, py=0)
         filename = input("Enter the filename of the saved model: ")
-        loaded_data = load_policy(filename)
-        Q[:] = loaded_data['Q_table']
+        loaded_q, loaded_settings = load_policy(filename)
+        print("Model loaded successfully!")
+        print("Hyperparams: ", loaded_settings)
+        Q[:] = loaded_q
     else:
         print_text_with_border("INVALID INPUT. EXITING", px=40, py=0)
         return

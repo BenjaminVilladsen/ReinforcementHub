@@ -1,19 +1,27 @@
 import json
 import pickle
 
-def store_policy(filename, Q):
+def store_policy(filename, Q, settings):
     with open(filename, 'wb') as file:
         pickle.dump({'Q_table': Q}, file)
 
+    settings_filename = filename.replace(".pkl", ".json")
+    with open(settings_filename, 'w') as file:
+        json.dump({'settings': settings}, file)
+
 def load_policy(filename):
+    loaded_Q = None
+    loaded_settings = None
     with open(filename, 'rb') as file:
-        return pickle.load(file)
+        loaded_Q_raw = pickle.load(file)
+        loaded_Q = loaded_Q_raw['Q_table']
 
-def store_hyperparameters(filename, hyperparameters):
-    with open(filename, 'w') as file:
-        json.dump({'hyperparameters': hyperparameters}, file)
-
-def load_hyperparameters(filename):
+    filename = filename.replace(".pkl", ".json")
     with open(filename, 'r') as file:
         data = json.load(file)
-        return data['hyperparameters']
+        loaded_settings = data['settings']
+
+    return loaded_Q, loaded_settings
+
+
+
