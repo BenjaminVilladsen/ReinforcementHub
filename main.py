@@ -160,4 +160,4 @@ else:
     store_hyperparameters(filename.replace(".pkl", ".json"), best_hyperparameters)
     print(f"Best policy and hyperparameters saved to {filename}")
 
-playsound('sarsa_new/sound.mp3')
+playsound('sarsa/sound.mp3')
