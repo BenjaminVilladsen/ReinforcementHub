@@ -16,6 +16,8 @@ const double MASS = 1;
 const double MOI = (1.0/6.0) * MASS * (34*34); //We calculate MOI of a square with sides the length of the bottom of the lander.
 const double GROUND_LEVEL = 0;
 
+const double APS = 50;
+
 //Side engines
 const double SIDE_ENGINE_HEIGHT = 14;
 
@@ -261,7 +263,7 @@ double y_vel() {
     if (lander_pos_y &gt; Y_POS_MAX)
         return 0;
 
-    return lander_vel_y;
+    return lander_vel_y/APS;
 }
 
 double x_vel() {
@@ -271,7 +273,7 @@ double x_vel() {
     if (lander_pos_x &gt; X_POS_MAX)
         return 0;
 
-    return lander_vel_x;
+    return lander_vel_x/APS;
 }
 
 double ang_vel() {
@@ -302,13 +304,13 @@ t'==50</label>
 		<transition id="id2">
 			<source ref="id1"/>
 			<target ref="id0"/>
-			<label kind="synchronisation" x="-68" y="68">main!</label>
+			<label kind="synchronisation" x="-68" y="68">free!</label>
 			<nail x="-51" y="102"/>
 		</transition>
 		<transition id="id3">
 			<source ref="id1"/>
 			<target ref="id0"/>
-			<label kind="synchronisation" x="-68" y="136">right!</label>
+			<label kind="synchronisation" x="-68" y="136">free!</label>
 			<nail x="204" y="68"/>
 			<nail x="-51" y="170"/>
 			<nail x="-297" y="76"/>
@@ -324,7 +326,7 @@ t'==50</label>
 		<transition id="id5">
 			<source ref="id1"/>
 			<target ref="id0"/>
-			<label kind="synchronisation" x="-68" y="-119">left!</label>
+			<label kind="synchronisation" x="-68" y="-119">free!</label>
 			<nail x="-51" y="-102"/>
 		</transition>
 		<transition id="id6" controllable="false">
