@@ -7,6 +7,9 @@ broadcast chan left, right, main, free;
 //Engine statuses
 bool main_on=false, left_on=false, right_on=false;
 
+double frames = 0;
+double seconds = 0.0;
+
 //Constants
 const double GRAVITY = -10.0;
 const double PI = 3.1415;
@@ -29,7 +32,7 @@ const double Y_POS_MAX = 75;
 const double X_VEL_MAX = 10;
 const double X_VEL_MIN = -10;
 const double Y_VEL_MAX = 10;
-const double Y_VEL_MIN = -10;
+const double Y_VEL_MIN = -1000;
 const double MIN_ANGLE = -2*PI;
 const double MAX_ANGLE = 2*PI;
 const double ANG_VEL_MIN = -5;
@@ -38,6 +41,7 @@ const double ANG_VEL_MAX = 5;
 ///Lander properties_______________________________________________________
 clock lander_pos_x=37.5, lander_pos_y=45, lander_vel_x=0, lander_vel_y=0, lander_angle=0, lander_angle_vel=0;
 int touch;
+
 const double LANDER_POLY[14][2] = {
     //Lander body
     {-14,  17},
@@ -263,7 +267,7 @@ double y_vel() {
     if (lander_pos_y &gt; Y_POS_MAX)
         return 0;
 
-    return lander_vel_y/APS;
+    return lander_vel_y;
 }
 
 double x_vel() {
@@ -332,8 +336,10 @@ t'==50</label>
 		<transition id="id6" controllable="false">
 			<source ref="id0"/>
 			<target ref="id1"/>
-			<label kind="guard" x="-110" y="0">t==1</label>
-			<label kind="assignment" x="-17" y="0">t=0.0</label>
+			<label kind="guard" x="-93" y="0">t==1</label>
+			<label kind="assignment" x="-51" y="17">t = 0.0,
+frames = frames+1,
+seconds = frames/50</label>
 		</transition>
 	</template>
 	<template>
