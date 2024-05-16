@@ -1,7 +1,8 @@
-import gym
+import gymnasium as gym
 
 
-from helpers import discretize_state, discretize_state_mountaincar, mountain_car_epsilon_greedy_policy
+from helpers import discretize_state, discretize_state_mountaincar, mountain_car_epsilon_greedy_policy, \
+    discretize_state_cartpole, cartpole_epsilon_greedy_policy
 import numpy as np
 from config import settings_lander, settings_car
 from playsound import playsound
@@ -58,4 +59,32 @@ def mountain_car_simulation(Q, bins):
             total_reward += reward
         if state[0] >= 0.5:  # Check if the car reached the goal
             playsound('sound.mp3')  # Play a sound if the goal is reached
+        print(f"Total reward: {total_reward}")
+
+def cartpole_simulation(Q, bins):
+    """
+    Run the simulation of the Cartpole
+    :param Q: Q-table
+    :param bins: Bins used for state discretization
+    :return: None
+    """
+    env = gym.make('CartPole-v1', render_mode='human')
+    print("Welcome to the Cartpole simulation!")
+
+    for i in range(40):  # Run the simulation for 40 episodes
+        state = env.reset()
+        done = False
+        total_reward = 0
+        while not done:
+            state = discretize_state_cartpole(state, bins=bins)
+            action = cartpole_epsilon_greedy_policy(
+                state=state,
+                epsilon=0,
+                env=env,
+                q_table=Q,
+            )
+            state, reward, done, _, _ = env.step(action)
+            total_reward += reward
+        if total_reward >= 200:
+            playsound('sound.mp3')
         print(f"Total reward: {total_reward}")

@@ -1,5 +1,5 @@
 import numpy as np
-import gym
+import gymnasium as gym
 
 
 def init_lander_env():
@@ -85,4 +85,40 @@ def mountain_car_epsilon_greedy_policy(state, epsilon, env, q_table):
     else:
         # Ensure that `state` is a tuple of (position_index, velocity_index)
         action = np.argmax(q_table[state[0], state[1], :])  # Access all actions for given state
+    return action
+
+def init_cartpole_env():
+    env = gym.make('CartPole-v1')
+    return env
+
+def init_q_cartpole(env, settings):
+    # Initialize the Q-table
+    q_table_dimensions = [settings['num_bins']] * 4 + [env.action_space.n]
+    q_table = np.zeros(q_table_dimensions)
+    bins = [np.linspace(b[0], b[1], settings['num_bins']) for b in settings['state_bounds']]
+    return q_table, bins
+
+def discretize_state_cartpole(state, bins):
+    """
+    Discretize the continuous state components of the CartPole environment.
+    """
+    if isinstance(state, tuple):
+        state = state[0]
+    else:
+        state = state
+
+    # Discretize each continuous component
+    discretized = [int(np.digitize(state[i], bins[i]) - 1) for i in range(4)]
+    return tuple(discretized)
+
+def cartpole_epsilon_greedy_policy(state, epsilon, env, q_table):
+    """
+    Select an action for given state using the epsilon-greedy strategy.
+    """
+
+    if np.random.rand() < epsilon:
+        action = np.random.choice(env.action_space.n)
+    else:
+        # Ensure that `state` is a tuple of (position_index, velocity_index)
+        action = np.argmax(q_table[state[0], state[1], state[2], state[3], :])  # Access all actions for given state
     return action
