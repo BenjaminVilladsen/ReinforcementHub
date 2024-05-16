@@ -48,7 +48,7 @@ def sarsa(epsilon_greedy_policy_fn, discretize_fn, print_fn, q_table, env, setti
 
         if episode % settings['log_interval'] == 0 and episode > 0:
             # print average reward the most recent 100 episodes
-            print_episode_stats(episode_rewards[-settings['log_interval']:], i_episode=episode, episode_span=settings['log_interval'])
+            print_fn(episode_rewards[-settings['log_interval']:], title=episode, settings=settings, convergence_count=convergence_count, success_count=success_count, time_elapsed=time.time() - start_time)
 
 
     env.close()

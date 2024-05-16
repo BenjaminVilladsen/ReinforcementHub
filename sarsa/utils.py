@@ -50,6 +50,23 @@ def print_episode_stats(episode_rewards, i_episode, episode_span=100):
     console.print(table)
 
 
+def print_stats_lander(epsiode_rewards, title, settings, convergence_count, success_count, time_elapsed):
+    console = Console()
+    table = Table(title=f"Episode {title}", title_style="bold blue", show_header=True, header_style="bold magenta")
+    table.add_column("Reward mean", style="dim")
+    table.add_column("+- std deviation", style="dim")
+    table.add_column("Convergence count", style="dim")
+    table.add_column("Success rate", style="dim")
+    table.add_column("Time elapsed", style="dim")
+
+    reward_mean = np.mean(epsiode_rewards)
+    plus_minus_std_deviation = np.std(epsiode_rewards)
+
+    table.add_row(str(reward_mean), str(plus_minus_std_deviation), str(convergence_count), f"{success_count}/{settings['num_episodes']}",
+                  str(time_elapsed))
+    console.print(table)
+
+
 
 def plot_rewards(episode_rewards, window=100):
     plt.figure(figsize=(10, 5))

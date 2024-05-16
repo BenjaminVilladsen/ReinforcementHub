@@ -6,7 +6,7 @@ from helpers import epsilon_greedy_policy, discretize_state, init_q, init_lander
     init_q_mountaincar, discretize_state_mountaincar, mountain_car_epsilon_greedy_policy
 from file_handling import store_policy, load_policy
 from simulate import lander_simulation, mountain_car_simulation
-from utils import print_text_with_border, plot_rewards, print_episode_stats
+from utils import print_text_with_border, plot_rewards, print_episode_stats, print_stats_lander
 import numpy as np
 
 
@@ -26,7 +26,7 @@ def main():
             env=env,
             settings=settings_car,
             bins=bins,
-            print_fn=print_episode_stats
+            print_fn=print_stats_lander
         )
 
         filename = f"mc_best_policy_{np.mean(episode_rewards)}_{time.strftime('%Y%m%d-%H%M%S')}.pkl"
