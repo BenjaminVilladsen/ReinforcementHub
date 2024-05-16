@@ -9,8 +9,8 @@ settings_lander = {
     "gamma": 0.9,
     "epsilon": 0.1,
     "num_bins": 20,
-    "num_episodes": 1000,
-    "log_interval": 1000,
+    "num_episodes": 30000,
+    "log_interval": 100,
     "state_bounds": state_bounds_lander,
     "convergence_threshold": 0.01,
     "success_threshold": 200
