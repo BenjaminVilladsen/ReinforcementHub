@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.6//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_6.dtd'>
+<nta>
+	<declaration>//Channels
+chan left, right;
+
+//Thresholds
+const double CART_POS_LIMIT = 4.8;
+const double CART_POS_TERMINATION_LIMIT = 2.4;
+
+const double POLE_ANGLE_LIMIT = 0.418;
+const double POLE_ANGLE_TERMINATION = 0.2095;
+
+
+
+
+//Observation space
+clock cart_pos, cart_vel, pole_ang, pole_vel;</declaration>
+	<template>
+		<name x="5" y="5">Agent</name>
+		<declaration>clock t;</declaration>
+		<location id="id0" x="51" y="314">
+			<name x="41" y="280">Init</name>
+			<label kind="invariant" x="41" y="331">t&lt;=1</label>
+		</location>
+		<location id="id1" x="323" y="314">
+			<name x="313" y="280">Control</name>
+			<committed/>
+		</location>
+		<init ref="id0"/>
+		<transition id="id2">
+			<source ref="id1"/>
+			<target ref="id0"/>
+			<label kind="synchronisation" x="144" y="425">right!</label>
+			<nail x="187" y="408"/>
+		</transition>
+		<transition id="id3">
+			<source ref="id1"/>
+			<target ref="id0"/>
+			<label kind="synchronisation" x="161" y="195">left!</label>
+			<nail x="187" y="229"/>
+		</transition>
+		<transition id="id4" controllable="false">
+			<source ref="id0"/>
+			<target ref="id1"/>
+			<label kind="guard" x="136" y="314">t==1</label>
+			<label kind="assignment" x="221" y="314">t=0</label>
+		</transition>
+	</template>
+	<template>
+		<name>CartPole</name>
+		<location id="id5" x="-518" y="314">
+			<name x="-528" y="280">Init</name>
+		</location>
+		<location id="id6" x="-161" y="314">
+		</location>
+		<init ref="id5"/>
+		<transition id="id7">
+			<source ref="id5"/>
+			<target ref="id6"/>
+		</transition>
+	</template>
+	<system>system Agent, CartPole;</system>
+	<queries>
+		<query>
+			<formula/>
+			<comment/>
+		</query>
+	</queries>
+</nta>
