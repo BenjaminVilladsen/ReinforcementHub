@@ -12,6 +12,8 @@ def sarsa(epsilon_greedy_policy_fn, discretize_fn, print_fn, q_table, env, setti
     convergence_count = 0
     start_time = time.time()
     episode_rewards = []
+    prev_avg = -1_000_000
+    curr_avg = -1_000_00
     for episode in range(settings['num_episodes']):
         initial_state = env.reset()
         current_state = discretize_fn(initial_state, bins)
@@ -38,17 +40,22 @@ def sarsa(epsilon_greedy_policy_fn, discretize_fn, print_fn, q_table, env, setti
 
         episode_rewards.append(episode_reward)
 
+        #update current average
+        curr_avg = np.mean(episode_rewards)
+        # Check convergence criteria
+        if abs(curr_avg - prev_avg) < settings['convergence_threshold']:
+            convergence_count += 1
+        prev_avg = curr_avg
+
+
         # Check success criteria
         if done and episode_reward >= settings['success_threshold']:
             success_count += 1
 
-        # Check convergence criteria
-        if np.abs(td_delta) < settings['convergence_threshold']:
-            convergence_count += 1
-
         if episode % settings['log_interval'] == 0 and episode > 0:
             # print average reward the most recent 100 episodes
-            print_fn(episode_rewards[-settings['log_interval']:], title=episode, settings=settings, convergence_count=convergence_count, success_count=success_count, time_elapsed=time.time() - start_time)
+            #print_fn(episode_rewards[-settings['log_interval']:], title=episode, settings=settings, convergence_count=convergence_count, success_count=success_count, time_elapsed=time.time() - start_time)
+            print_fn(episode_rewards, title=episode, settings=settings, convergence_count=convergence_count, success_count=success_count, time_elapsed=time.time() - start_time)
 
 
     env.close()
