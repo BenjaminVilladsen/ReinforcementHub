@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 import gym
 
@@ -6,6 +8,9 @@ from utils import print_episode_stats
 
 def sarsa(epsilon_greedy_policy_fn, discretize_fn, print_fn, q_table, env, settings, bins):
 
+    success_count = 0
+    convergence_count = 0
+    start_time = time.time()
     episode_rewards = []
     for episode in range(settings['num_episodes']):
         initial_state = env.reset()
@@ -32,6 +37,15 @@ def sarsa(epsilon_greedy_policy_fn, discretize_fn, print_fn, q_table, env, setti
             current_state, current_action = next_state, next_action
 
         episode_rewards.append(episode_reward)
+
+        # Check success criteria
+        if done and episode_reward >= settings['success_threshold']:
+            success_count += 1
+
+        # Check convergence criteria
+        if np.abs(td_delta) < settings['convergence_threshold']:
+            convergence_count += 1
+
         if episode % settings['log_interval'] == 0 and episode > 0:
             # print average reward the most recent 100 episodes
             print_episode_stats(episode_rewards[-settings['log_interval']:], i_episode=episode, episode_span=settings['log_interval'])

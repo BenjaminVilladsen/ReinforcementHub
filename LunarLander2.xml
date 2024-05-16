@@ -86,8 +86,8 @@ double cost_maerke() {
     double a = 100 * sqrt(globalState[0] * globalState[0] + globalState[1] * globalState[1]);
     double b = 100 * sqrt(globalState[2]/APS * globalState[2]/APS + globalState[3]/APS * globalState[3]/APS);
     double c = 100 * fabs(globalState[4]);
-    double d = -10 * globalState[6];
-    double e = -10 * globalState[7]; 
+    double d = -500 * globalState[6];
+    double e = -500 * globalState[7]; 
     return a + b + c + d + e;
 }
 
@@ -424,6 +424,13 @@ lander_angle' == 0</label>
 		</location>
 		<location id="id15" x="-603" y="34">
 			<name x="-637" y="0">Terminated</name>
+			<label kind="invariant" x="-348" y="144">cost_shape' == 0 &amp;&amp;
+lander_vel_x' == 0 &amp;&amp;
+lander_vel_y' == 0 &amp;&amp;
+lander_angle_vel' == 0 &amp;&amp;
+lander_pos_x' == 0 &amp;&amp;
+lander_pos_y' == 0 &amp;&amp;
+lander_angle' == 0</label>
 		</location>
 		<init ref="id7"/>
 		<transition id="id16" controllable="false">
@@ -520,262 +527,214 @@ update_state()</label>
 	<system>system Agent, LunarLander;
 </system>
 	<queries>
-		<option key="--split-ks" value="0.5"/>
-		<option key="--max-iterations" value="100"/>
 		<option key="--learning-method" value="4"/>
-		<option key="--indifference-smoothing" value="20"/>
-		<option key="--reset-no-better" value="50"/>
-		<option key="--runs-pr-state" value="200"/>
-		<option key="--random-search-limit" value="0.7"/>
-		<option key="--split-lower-t" value="1.0"/>
-		<option key="--split-filter-rate" value="0.01"/>
-		<option key="--split-upper-t" value="20.0"/>
-		<option key="--total-runs" value="20000"/>
-		<option key="--deterministic-search-limit" value="0.3"/>
 		<option key="--hashtable-size" value="32"/>
-		<option key="--indifference-scale" value="1.0E-4"/>
-		<option key="--max-reset-learning" value="10"/>
-		<option key="--discount" value="0.99"/>
-		<option key="--qlearning-alpha" value="1"/>
-		<option key="--split-filter-val" value="0.95"/>
 		<query>
-			<formula>strategy win = minE(cost_shape)[&lt;=800] {} -&gt; {globalState, lander_pos_x, lander_pos_y, lander_vel_x, lander_vel_y, lander_angle, lander_angle_vel}: &lt;&gt; LunarLander.Terminated</formula>
+			<formula>strategy win = minE(cost_shape)[&lt;=800] {} -&gt; {main_on, left_on, right_on, lander_pos_x, cost_shape, lander_pos_y, lander_vel_x, lander_vel_y, lander_angle, lander_angle_vel, touch, globalState[0], globalState[1],globalState[2],globalState[3],globalState[4],globalState[5]}: &lt;&gt; LunarLander.Terminated</formula>
 			<comment/>
-			<result outcome="success" type="quality" timestamp="2024-05-15 10:30:16 +0200">
-				<option key="--split-ks" value="0.5"/>
-				<option key="--max-iterations" value="100"/>
-				<option key="--learning-method" value="4"/>
-				<option key="--indifference-smoothing" value="20"/>
-				<option key="--reset-no-better" value="50"/>
-				<option key="--runs-pr-state" value="200"/>
-				<option key="--random-search-limit" value="0.7"/>
-				<option key="--split-lower-t" value="1.0"/>
-				<option key="--split-filter-rate" value="0.01"/>
-				<option key="--split-upper-t" value="20.0"/>
-				<option key="--total-runs" value="20000"/>
-				<option key="--deterministic-search-limit" value="0.3"/>
+			<result outcome="success" type="quality" timestamp="2024-05-16 13:53:54 +0200">
 				<option key="--hashtable-size" value="32"/>
-				<option key="--indifference-scale" value="1.0E-4"/>
-				<option key="--max-reset-learning" value="10"/>
-				<option key="--discount" value="0.99"/>
-				<option key="--qlearning-alpha" value="1"/>
-				<option key="--split-filter-val" value="0.95"/>
+				<option key="--learning-method" value="4"/>
 			</result>
 		</query>
 		<query>
 			<formula>E[&lt;=400;400] (max: cost_shape) under win</formula>
 			<comment/>
-			<result outcome="success" type="quantity" value="8887.15 ± 222.214 (95% CI)" timestamp="2024-05-15 10:36:08 +0200">
-				<option key="--split-ks" value="0.5"/>
-				<option key="--max-iterations" value="100"/>
-				<option key="--learning-method" value="4"/>
-				<option key="--indifference-smoothing" value="20"/>
-				<option key="--reset-no-better" value="50"/>
-				<option key="--runs-pr-state" value="200"/>
-				<option key="--random-search-limit" value="0.7"/>
-				<option key="--split-lower-t" value="1.0"/>
-				<option key="--split-filter-rate" value="0.01"/>
-				<option key="--split-upper-t" value="20.0"/>
-				<option key="--total-runs" value="20000"/>
-				<option key="--deterministic-search-limit" value="0.3"/>
+			<result outcome="success" type="quantity" value="9392.01 ± 255.228 (95% CI)" timestamp="2024-05-16 13:58:30 +0200">
 				<option key="--hashtable-size" value="32"/>
-				<option key="--indifference-scale" value="1.0E-4"/>
-				<option key="--max-reset-learning" value="10"/>
-				<option key="--discount" value="0.99"/>
-				<option key="--qlearning-alpha" value="1"/>
-				<option key="--split-filter-val" value="0.95"/>
-				<details>8887.15 ± 222.214 (95% CI)</details>
+				<option key="--learning-method" value="4"/>
+				<details>9392.01 ± 255.228 (95% CI)</details>
 				<plot title="Probability Density Distribution" xaxis="max: cost_shape" yaxis="probability density">
-					<series title="density" type="b(543.344579)" color="0x0000ff" encoding="csv">4186.336270923477,1.840452705257398E-5
-4729.680849756403,3.680905410514796E-5
-5273.025428589329,4.6011317631434945E-5
-5816.370007422254,1.5183734818373533E-4
-6359.714586255181,1.5183734818373533E-4
-6903.059165088107,1.5643847994687883E-4
-7446.403743921032,1.794441387625963E-4
-7989.748322753958,1.2423055760487435E-4
-8533.092901586884,1.932475340520268E-4
-9076.43748041981,1.1502829407858737E-4
-9619.782059252735,1.1502829407858737E-4
-10163.126638085661,1.1962942584173087E-4
-10706.471216918588,1.4263508465744835E-4
-11249.815795751514,5.521358115772194E-5
-11793.16037458444,6.901697644715243E-5
-12336.504953417365,6.441584468400892E-5
-12879.849532250291,4.6011317631434945E-5
-13423.194111083218,2.760679057886097E-5
-13966.538689916144,1.840452705257398E-5
-14509.883268749069,9.20226352628699E-6
+					<series title="density" type="b(921.634294)" color="0x0000ff" encoding="csv">4812.789111409052,5.696402612603299E-5
+5734.423405372819,1.6817950570543073E-4
+6656.057699336586,9.222747087072008E-5
+7577.691993300353,1.0850290690672951E-4
+8499.32628726412,1.220657702700707E-4
+9420.960581227886,1.3834120630608013E-4
+10342.594875191655,1.3291606096074365E-4
+11264.22916915542,1.0307776156139302E-4
+12185.863463119189,7.866460750737889E-5
+13107.497757082954,4.882630810802828E-5
+14029.132051046723,2.17005813813459E-5
+14950.766345010488,8.137718018004713E-6
+15872.400638974257,0.0
+16794.034932938022,2.7125726726682375E-6
+17715.66922690179,0.0
+18637.303520865556,0.0
+19558.937814829325,0.0
+20480.57210879309,0.0
+21402.20640275686,0.0
+22323.840696720625,2.7125726726682375E-6
 					</series>
-					<series title="average" type="pl" color="0x00dd00" encoding="csv">8887.150961744514,0.0
-8887.150961744514,1.932475340520268E-4
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">9392.006339246205,0.0
+9392.006339246205,1.6817950570543075E-4
 					</series>
-					<comment>Parameters: α=0.05, ε=0.05, bucket width=543.34, bucket count=20
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=921.63, bucket count=20
 Runs: 400 in total, 400 (100%) displayed, 0 (0%) remaining
-Span of displayed sample: [4186.3, 15053]
-Mean estimate of displayed sample: 8887.2 ± 222.21 (95% CI)</comment>
+Span of displayed sample: [4812.8, 23245]
+Mean estimate of displayed sample: 9392 ± 255.23 (95% CI)</comment>
 				</plot>
 				<plot title="Probability Distribution" xaxis="max: cost_shape" yaxis="probability">
-					<series title="probability" type="b(543.344579)" color="0x0000ff" encoding="csv">4186.336270923477,0.01
-4729.680849756403,0.02
-5273.025428589329,0.025
-5816.370007422254,0.0825
-6359.714586255181,0.0825
-6903.059165088107,0.085
-7446.403743921032,0.0975
-7989.748322753958,0.0675
-8533.092901586884,0.105
-9076.43748041981,0.0625
-9619.782059252735,0.0625
-10163.126638085661,0.065
-10706.471216918588,0.0775
-11249.815795751514,0.03
-11793.16037458444,0.0375
-12336.504953417365,0.035
-12879.849532250291,0.025
-13423.194111083218,0.015
-13966.538689916144,0.01
-14509.883268749069,0.005
+					<series title="probability" type="b(921.634294)" color="0x0000ff" encoding="csv">4812.789111409052,0.0525
+5734.423405372819,0.155
+6656.057699336586,0.085
+7577.691993300353,0.1
+8499.32628726412,0.1125
+9420.960581227886,0.1275
+10342.594875191655,0.1225
+11264.22916915542,0.095
+12185.863463119189,0.0725
+13107.497757082954,0.045
+14029.132051046723,0.02
+14950.766345010488,0.0075
+15872.400638974257,0.0
+16794.034932938022,0.0025
+17715.66922690179,0.0
+18637.303520865556,0.0
+19558.937814829325,0.0
+20480.57210879309,0.0
+21402.20640275686,0.0
+22323.840696720625,0.0025
 					</series>
-					<series title="average" type="pl" color="0x00dd00" encoding="csv">8887.150961744514,0.0
-8887.150961744514,0.105
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">9392.006339246205,0.0
+9392.006339246205,0.155
 					</series>
-					<comment>Parameters: α=0.05, ε=0.05, bucket width=543.34, bucket count=20
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=921.63, bucket count=20
 Runs: 400 in total, 400 (100%) displayed, 0 (0%) remaining
-Span of displayed sample: [4186.3, 15053]
-Mean estimate of displayed sample: 8887.2 ± 222.21 (95% CI)</comment>
+Span of displayed sample: [4812.8, 23245]
+Mean estimate of displayed sample: 9392 ± 255.23 (95% CI)</comment>
 				</plot>
 				<plot title="Cumulative Probability Distribution" xaxis="max: cost_shape" yaxis="probability">
-					<series title="cumulative" type="l" color="0x000000" encoding="csv">4186.336270923477,0.0
-4729.680849756403,0.01
-5273.025428589329,0.03
-5816.370007422254,0.055
-6359.714586255181,0.1375
-6903.059165088107,0.22
-7446.403743921032,0.305
-7989.748322753958,0.4025
-8533.092901586884,0.47
-9076.43748041981,0.575
-9619.782059252735,0.6375
-10163.126638085661,0.7
-10706.471216918588,0.765
-11249.815795751514,0.8425
-11793.16037458444,0.8725
-12336.504953417365,0.91
-12879.849532250291,0.945
-13423.194111083218,0.97
-13966.538689916144,0.985
-14509.883268749069,0.995
+					<series title="cumulative" type="l" color="0x000000" encoding="csv">4812.789111409052,0.0
+5734.423405372819,0.0525
+6656.057699336586,0.2075
+7577.691993300353,0.2925
+8499.32628726412,0.3925
+9420.960581227886,0.505
+10342.594875191655,0.6325
+11264.22916915542,0.755
+12185.863463119189,0.85
+13107.497757082954,0.9225
+14029.132051046723,0.9675
+14950.766345010488,0.9875
+15872.400638974257,0.995
+16794.034932938022,0.995
+17715.66922690179,0.9975
+18637.303520865556,0.9975
+19558.937814829325,0.9975
+20480.57210879309,0.9975
+21402.20640275686,0.9975
+22323.840696720625,0.9975
 					</series>
-					<series title="average" type="pl" color="0x00dd00" encoding="csv">8887.150961744514,0.0
-8887.150961744514,1.0
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">9392.006339246205,0.0
+9392.006339246205,1.0
 					</series>
-					<comment>Parameters: α=0.05, ε=0.05, bucket width=543.34, bucket count=20
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=921.63, bucket count=20
 Runs: 400 in total, 400 (100%) displayed, 0 (0%) remaining
-Span of displayed sample: [4186.3, 15053]
-Mean estimate of displayed sample: 8887.2 ± 222.21 (95% CI)</comment>
+Span of displayed sample: [4812.8, 23245]
+Mean estimate of displayed sample: 9392 ± 255.23 (95% CI)</comment>
 				</plot>
 				<plot title="Cumulative Probability Confidence Intervals" xaxis="max: cost_shape" yaxis="probability">
-					<series title="upper limit" type="k" color="0x0000dd" encoding="csv">4186.336270923477,0.009179804583665263
-4729.680849756403,0.025404800907336253
-5273.025428589329,0.05181721543058359
-5816.370007422254,0.08208923736452577
-6359.714586255181,0.17518631649322824
-6903.059165088107,0.2638433158275084
-7446.403743921032,0.35269359192234434
-7989.748322753958,0.45238422437042664
-8533.092901586884,0.5202279008010796
-9076.43748041981,0.6239822512451507
-9619.782059252735,0.6846891504869105
-10163.126638085661,0.7445332719046902
-10706.471216918588,0.8057073571113387
-11249.815795751514,0.8768004507642361
-11793.16037458444,0.9035749266956374
-12336.504953417365,0.9361685268073169
-12879.849532250291,0.9652145197962778
-13423.194111083218,0.9844044470001057
-13966.538689916144,0.9944758904954193
-14509.883268749069,0.9993939021906778
+					<series title="upper limit" type="k" color="0x0000dd" encoding="csv">4812.789111409052,0.009179804583665263
+5734.423405372819,0.07913463048694427
+6656.057699336586,0.25058934822986917
+7577.691993300353,0.33975247352131777
+8499.32628726412,0.4422549117954911
+9420.960581227886,0.5550524271401412
+10342.594875191655,0.6798630695778273
+11264.22916915542,0.7963758456100446
+12185.863463119189,0.8835415213926012
+13107.497757082954,0.9467373415613488
+14029.132051046723,0.9825838539157878
+14950.766345010488,0.9959291641554002
+15872.400638974257,0.9993939021906778
+16794.034932938022,0.9993939021906778
+17715.66922690179,0.9999367074830952
+18637.303520865556,0.9999367074830952
+19558.937814829325,0.9999367074830952
+20480.57210879309,0.9999367074830952
+21402.20640275686,0.9999367074830952
+22323.840696720625,0.9999367074830952
 					</series>
-					<series title="lower limit" type="k" color="0xdd0000" encoding="csv">4186.336270923477,0.0
-4729.680849756403,0.002731195971242954
-5273.025428589329,0.01559555299989434
-5816.370007422254,0.03478548020372223
-6359.714586255181,0.10529156826180643
-6903.059165088107,0.18035595725209103
-7446.403743921032,0.2602198329849744
-7989.748322753958,0.3540694390623992
-8533.092901586884,0.4202191288888451
-9076.43748041981,0.5248998335723469
-9619.782059252735,0.5882594811495423
-10163.126638085661,0.6524781209263504
-10706.471216918588,0.7203217752600526
-11249.815795751514,0.8030364924328849
-11793.16037458444,0.8357879415626545
-12336.504953417365,0.8775801131096775
-12879.849532250291,0.9179107626354742
-13423.194111083218,0.9481827845694164
-13966.538689916144,0.9676387055192249
-14509.883268749069,0.9820558553944145
+					<series title="lower limit" type="k" color="0xdd0000" encoding="csv">4812.789111409052,0.0
+5734.423405372819,0.03278842457715372
+6656.057699336586,0.16880094667311826
+7577.691993300353,0.24834898931994961
+8499.32628726412,0.34434806694029313
+9420.960581227886,0.4548730720509267
+10342.594875191655,0.5831603460686676
+11264.22916915542,0.7098051255663441
+12185.863463119189,0.8111778635180942
+13107.497757082954,0.8917970653118859
+14029.132051046723,0.9450651832493072
+14950.766345010488,0.9710716562147131
+15872.400638974257,0.9820558553944145
+16794.034932938022,0.9820558553944145
+17715.66922690179,0.9861502300379867
+18637.303520865556,0.9861502300379867
+19558.937814829325,0.9861502300379867
+20480.57210879309,0.9861502300379867
+21402.20640275686,0.9861502300379867
+22323.840696720625,0.9861502300379867
 					</series>
-					<series title="cumulative" type="l" color="0x000000" encoding="csv">4186.336270923477,0.0
-4729.680849756403,0.01
-5273.025428589329,0.03
-5816.370007422254,0.055
-6359.714586255181,0.1375
-6903.059165088107,0.22
-7446.403743921032,0.305
-7989.748322753958,0.4025
-8533.092901586884,0.47
-9076.43748041981,0.575
-9619.782059252735,0.6375
-10163.126638085661,0.7
-10706.471216918588,0.765
-11249.815795751514,0.8425
-11793.16037458444,0.8725
-12336.504953417365,0.91
-12879.849532250291,0.945
-13423.194111083218,0.97
-13966.538689916144,0.985
-14509.883268749069,0.995
+					<series title="cumulative" type="l" color="0x000000" encoding="csv">4812.789111409052,0.0
+5734.423405372819,0.0525
+6656.057699336586,0.2075
+7577.691993300353,0.2925
+8499.32628726412,0.3925
+9420.960581227886,0.505
+10342.594875191655,0.6325
+11264.22916915542,0.755
+12185.863463119189,0.85
+13107.497757082954,0.9225
+14029.132051046723,0.9675
+14950.766345010488,0.9875
+15872.400638974257,0.995
+16794.034932938022,0.995
+17715.66922690179,0.9975
+18637.303520865556,0.9975
+19558.937814829325,0.9975
+20480.57210879309,0.9975
+21402.20640275686,0.9975
+22323.840696720625,0.9975
 					</series>
-					<series title="average" type="pl" color="0x00dd00" encoding="csv">8887.150961744514,0.0
-8887.150961744514,1.0
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">9392.006339246205,0.0
+9392.006339246205,1.0
 					</series>
-					<comment>Parameters: α=0.05, ε=0.05, bucket width=543.34, bucket count=20
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=921.63, bucket count=20
 Runs: 400 in total, 400 (100%) displayed, 0 (0%) remaining
-Span of displayed sample: [4186.3, 15053]
-Mean estimate of displayed sample: 8887.2 ± 222.21 (95% CI)</comment>
+Span of displayed sample: [4812.8, 23245]
+Mean estimate of displayed sample: 9392 ± 255.23 (95% CI)</comment>
 				</plot>
 				<plot title="Frequency Histogram" xaxis="max: cost_shape" yaxis="count">
-					<series title="count" type="b(543.344579)" color="0x0000ff" encoding="csv">4186.336270923477,4.0
-4729.680849756403,8.0
-5273.025428589329,10.0
-5816.370007422254,33.0
-6359.714586255181,33.0
-6903.059165088107,34.0
-7446.403743921032,39.0
-7989.748322753958,27.0
-8533.092901586884,42.0
-9076.43748041981,25.0
-9619.782059252735,25.0
-10163.126638085661,26.0
-10706.471216918588,31.0
-11249.815795751514,12.0
-11793.16037458444,15.0
-12336.504953417365,14.0
-12879.849532250291,10.0
-13423.194111083218,6.0
-13966.538689916144,4.0
-14509.883268749069,2.0
+					<series title="count" type="b(921.634294)" color="0x0000ff" encoding="csv">4812.789111409052,21.0
+5734.423405372819,62.0
+6656.057699336586,34.0
+7577.691993300353,40.0
+8499.32628726412,45.0
+9420.960581227886,51.0
+10342.594875191655,49.0
+11264.22916915542,38.0
+12185.863463119189,29.0
+13107.497757082954,18.0
+14029.132051046723,8.0
+14950.766345010488,3.0
+15872.400638974257,0.0
+16794.034932938022,1.0
+17715.66922690179,0.0
+18637.303520865556,0.0
+19558.937814829325,0.0
+20480.57210879309,0.0
+21402.20640275686,0.0
+22323.840696720625,1.0
 					</series>
-					<series title="average" type="pl" color="0x00dd00" encoding="csv">8887.150961744514,0.0
-8887.150961744514,42.0
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">9392.006339246205,0.0
+9392.006339246205,62.0
 					</series>
-					<comment>Parameters: α=0.05, ε=0.05, bucket width=543.34, bucket count=20
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=921.63, bucket count=20
 Runs: 400 in total, 400 (100%) displayed, 0 (0%) remaining
-Span of displayed sample: [4186.3, 15053]
-Mean estimate of displayed sample: 8887.2 ± 222.21 (95% CI)</comment>
+Span of displayed sample: [4812.8, 23245]
+Mean estimate of displayed sample: 9392 ± 255.23 (95% CI)</comment>
 				</plot>
 			</result>
 		</query>
