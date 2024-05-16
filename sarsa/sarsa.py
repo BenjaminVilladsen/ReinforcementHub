@@ -12,6 +12,7 @@ def sarsa(epsilon_greedy_policy_fn, discretize_fn, print_fn, q_table, env, setti
     convergence_count = 0
     start_time = time.time()
     episode_rewards = []
+    current_epsilon = settings['epsilon']
     for episode in range(settings['num_episodes']):
         initial_state = env.reset()
         current_state = discretize_fn(initial_state, bins)
@@ -20,12 +21,13 @@ def sarsa(epsilon_greedy_policy_fn, discretize_fn, print_fn, q_table, env, setti
 
         episode_reward = 0
         t = 0
+
         while not done:
             t += 1
             next_state_raw, reward, done, _, _ = env.step(current_action)  # Environment step
             episode_reward += reward
             next_state = discretize_fn(next_state_raw, bins)  # Discretize the resulting state
-            next_action = epsilon_greedy_policy_fn(next_state, settings['epsilon'], env,
+            next_action = epsilon_greedy_policy_fn(next_state,  current_epsilon, env,
                                                    q_table)  # Choose next action using epsilon-greedy
 
             # SARSA update
@@ -49,7 +51,10 @@ def sarsa(epsilon_greedy_policy_fn, discretize_fn, print_fn, q_table, env, setti
         if episode % settings['log_interval'] == 0 and episode > 0:
             # print average reward the most recent 100 episodes
             print_episode_stats(episode_rewards[-settings['log_interval']:], i_episode=episode, episode_span=settings['log_interval'])
+            print("Epsilon: ", current_epsilon)
 
+        #Update current epsilon
+        current_epsilon = max(settings['epsilon_min'], current_epsilon * settings['epsilon_decay'])
 
     env.close()
     return q_table, episode_rewards

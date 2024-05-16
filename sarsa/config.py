@@ -28,14 +28,17 @@ settings_car = {
 }
 
 settings_cartpole = {
-    "alpha": 0.1,
-    "gamma": 0.9,
-    "epsilon": 0.1,
-    "num_bins": 1_00,
-    "num_episodes": 10_000,
+    "alpha": 0.05,
+    "gamma": 0.95,
+    "epsilon": 1,  # You might also consider an epsilon decay strategy here
+    "epsilon_decay": 0.99995,
+    "epsilon_min": 0.01,
+    "num_bins": 50,
+    "num_episodes": 100_000,
     "log_interval": 1_000,
     "state_bounds": state_bounds_cartpole,
-    "convergence_threshold": 0.01,
-    "success_threshold": 200
+    "convergence_threshold": 0.005,
+    "success_threshold": 200  # Adjust based on the specific CartPole version
 }
+
 
