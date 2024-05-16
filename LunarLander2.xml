@@ -1,0 +1,783 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.6//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_6.dtd'>
+<nta>
+	<declaration>//Channels for the agent to emit
+broadcast chan left, right, main, free;
+
+//Engine statuses
+bool main_on=false, left_on=false, right_on=false;
+
+double frames = 0;
+double seconds = 0.0;
+
+//Constants
+const double GRAVITY = -10.0;
+const double PI = 3.1415;
+const double MAIN_ENGINE_POWER = 13.0;
+const double SIDE_ENGINE_POWER = 0.6; //0.6
+const double MASS = 1;
+const double MOI = (1.0/6.0) * MASS * (34*34); //We calculate MOI of a square with sides the length of the bottom of the lander.
+const double GROUND_LEVEL = 0;
+
+const double APS = 50;
+
+//Side engines
+const double SIDE_ENGINE_HEIGHT = 14;
+
+//Thresholds
+const double X_POS_MIN = 0;
+const double X_POS_MAX = 75;
+const double Y_POS_MIN = 0;
+const double Y_POS_MAX = 75;
+const double X_VEL_MAX = 10;
+const double X_VEL_MIN = -10;
+const double Y_VEL_MAX = 10;
+const double Y_VEL_MIN = -1000;
+const double MIN_ANGLE = -2*PI;
+const double MAX_ANGLE = 2*PI;
+const double ANG_VEL_MIN = -5;
+const double ANG_VEL_MAX = 5;
+
+///Lander properties_______________________________________________________
+clock lander_pos_x=37.5, lander_pos_y=30, lander_vel_x=0, lander_vel_y=0, lander_angle=0, lander_angle_vel=0;
+int touch;
+
+const double LANDER_POLY[14][2] = {
+    //Lander body
+    {-14,  17},
+    {-17,   0},
+    {-17, -10},
+    { 17, -10},
+    { 17,   0},
+    { 14,  17},
+
+    //Left leg
+    {-21.16, - 1.55}, //TL
+    {-17.22, - 2.24}, //TR
+    {-23.94, -17.31}, //BL
+    {-20.00,  -18.00}, //BR
+
+    //Right leg
+    {17.22, -2.24},
+    {21.16, -1.55},
+    {20.00,-18.00},
+    {23.94, -17.31}
+};
+
+
+///State handling_______________________________________________________
+double globalState[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+
+void update_state() {
+    globalState[0] = lander_pos_x;
+    globalState[1] = lander_pos_y;
+    globalState[2] = lander_vel_x;
+    globalState[3] = lander_vel_y;
+    globalState[4] = lander_angle;
+    globalState[5] = lander_angle_vel;
+    globalState[6] = touch == 2 || touch == 3;
+    globalState[7] = touch == 1 || touch == 3;
+}
+
+///Reward handling_______________________________________________________
+clock cost_shape;
+
+double cost_maerke() {
+    double a = 100 * sqrt(globalState[0] * globalState[0] + globalState[1] * globalState[1]);
+    double b = 100 * sqrt(globalState[2]/APS * globalState[2]/APS + globalState[3]/APS * globalState[3]/APS);
+    double c = 100 * fabs(globalState[4]);
+    double d = -10 * globalState[6];
+    double e = -10 * globalState[7]; 
+    return a + b + c + d + e;
+}
+
+///Helper functions_______________________________________________________
+//Min function
+double min(double a, double b){
+    return a &lt; b? a : b;
+}
+
+//Max function
+double max(double a, double b){
+    return a &gt; b? a : b;
+}
+
+//Clip function
+double clip(double val, double min_val, double max_val) {
+    return max(min_val, min(max_val, val));
+}
+
+//Clip all function
+void clip_all() {
+    lander_pos_x = clip(lander_pos_x, X_POS_MIN, X_POS_MAX);
+    lander_pos_y = clip(lander_pos_y, Y_POS_MIN, Y_POS_MAX);
+    lander_vel_x = clip(lander_vel_x, X_VEL_MIN, X_VEL_MAX);
+    lander_vel_y = clip(lander_vel_y, Y_VEL_MIN, Y_VEL_MAX);
+    lander_angle = clip(lander_angle, MIN_ANGLE, MAX_ANGLE);
+    lander_angle_vel = clip(lander_angle_vel, ANG_VEL_MIN, ANG_VEL_MAX);
+}
+
+
+///Various functions_______________________________________________________
+//Function for clipping all values
+void flying() {
+    clip_all();
+    update_state();
+    if(left_on){
+        lander_angle_vel = lander_angle_vel + SIDE_ENGINE_POWER * SIDE_ENGINE_HEIGHT / MOI;
+}
+    if(right_on){
+        lander_angle_vel = lander_angle_vel - SIDE_ENGINE_POWER * SIDE_ENGINE_HEIGHT / MOI;
+}
+}
+
+//Function for activating a specific engine
+void activate_engine(int engine) {
+    if (engine == 1) {
+        main_on = true;
+        left_on = false;
+        right_on = false;
+    } 
+    else if (engine == 2) {
+        main_on = false;
+        left_on = true;
+        right_on = false;
+    } 
+    else if (engine == 3) {
+        main_on = false;
+        left_on = false;
+        right_on = true;
+    } 
+    else {
+        main_on = false;
+        left_on = false;
+        right_on = false;
+    }
+}
+
+// Function to check leg and body contact with the ground
+int check_ground_contact() {
+    bool left_leg_contact = false;
+    bool right_leg_contact = false;
+    bool body_contact = false;
+
+    double rx, ry; // Variables to hold rotated coordinates
+    int i;
+
+    // Check contact for the body
+    for (i = 0; i &lt; 6; i++) {
+        rx = cos(lander_angle) * LANDER_POLY[i][0] - sin(lander_angle) * LANDER_POLY[i][1] + lander_pos_x;
+        ry = sin(lander_angle) * LANDER_POLY[i][0] + cos(lander_angle) * LANDER_POLY[i][1] + lander_pos_y;
+
+        if (ry &lt;= GROUND_LEVEL) {
+            body_contact = true;
+        }
+    }
+
+    // Check contact for the left leg if no body contact
+    if (!body_contact) {
+        for (i = 6; i &lt;= 9; i++) {
+            rx = cos(lander_angle) * LANDER_POLY[i][0] - sin(lander_angle) * LANDER_POLY[i][1] + lander_pos_x;
+            ry = sin(lander_angle) * LANDER_POLY[i][0] + cos(lander_angle) * LANDER_POLY[i][1] + lander_pos_y;
+
+            if (ry &lt;= GROUND_LEVEL) {
+                left_leg_contact = true;
+            }
+        }
+    }
+
+    // Check contact for the right leg if no body contact
+    if (!body_contact) {
+        for (i = 10; i &lt;= 13; i++) {
+            rx = cos(lander_angle) * LANDER_POLY[i][0] - sin(lander_angle) * LANDER_POLY[i][1] + lander_pos_x;
+            ry = sin(lander_angle) * LANDER_POLY[i][0] + cos(lander_angle) * LANDER_POLY[i][1] + lander_pos_y;
+
+            if (ry &lt;= GROUND_LEVEL) {
+                right_leg_contact = true;
+            }
+        }
+    }
+
+    // Determine the result based on which parts are contacting
+    if (body_contact) {
+        return 4; // Body is touching
+    } else if (left_leg_contact &amp;&amp; right_leg_contact) {
+        return 3; // Both legs are touching
+    } else if (left_leg_contact) {
+        return 2; // Only left leg is touching
+    } else if (right_leg_contact) {
+        return 1; // Only right leg is touching
+    }
+
+    return 0; // No parts are touching
+}
+
+///Acceleration and velocities_______________________________________________________
+double x_acc() {
+    if (lander_vel_x &lt;= X_VEL_MIN || lander_vel_x &gt;= X_VEL_MAX)
+        return 0;
+
+    if (main_on) {
+        return MAIN_ENGINE_POWER * sin(lander_angle) / MASS;
+    }
+    
+    if (left_on) {
+        return SIDE_ENGINE_POWER * cos(lander_angle) / MASS;
+    }
+    if (right_on) {
+        return -SIDE_ENGINE_POWER * cos(lander_angle) / MASS;
+    }
+
+    return 0;
+}
+
+double y_acc() {
+    if (lander_vel_y &lt;= Y_VEL_MIN)
+        return 0;
+
+    if (lander_vel_y &gt;= Y_VEL_MAX)
+        return 0;
+
+    return GRAVITY + (main_on * MAIN_ENGINE_POWER * cos(lander_angle) / MASS) + (left_on * (SIDE_ENGINE_POWER * (lander_angle &gt; 0 ? -1 : 1)) * cos(lander_angle) / MASS) + (right_on * (SIDE_ENGINE_POWER * (lander_angle &gt; 0 ? 1 : -1)) * cos(lander_angle) / MASS);    
+}
+
+
+double ang_acc() {
+      return 0;
+    if (lander_angle_vel &lt; ANG_VEL_MIN)
+        return 0;
+
+    if (lander_angle_vel &gt; ANG_VEL_MAX)
+        return 0;
+
+    if (left_on)
+        return -SIDE_ENGINE_POWER * SIDE_ENGINE_HEIGHT / MOI;
+
+    if (right_on)
+        return SIDE_ENGINE_POWER * SIDE_ENGINE_HEIGHT / MOI;
+
+    return 0;
+}
+
+double calc_terminal_cost(){
+    if (touch == 1 || touch == 2){
+        if(lander_angle &gt; -0.2 &amp;&amp; lander_angle &lt; 0.2){
+            return cost_shape = cost_shape - 5000;
+        }
+        return cost_shape = cost_shape + 5000;
+    }
+    if (touch == 3){
+        return cost_shape = cost_shape - 5000;
+    }
+    return cost_shape = cost_shape + 5000;    
+}
+
+double y_vel() {
+    if (lander_pos_y &lt; Y_POS_MIN)
+        return 0;
+    
+    if (lander_pos_y &gt; Y_POS_MAX)
+        return 0;
+
+    return lander_vel_y;
+}
+
+double x_vel() {
+    if (lander_pos_x &lt; X_POS_MIN)
+        return 0;
+    
+    if (lander_pos_x &gt; X_POS_MAX)
+        return 0;
+
+    return lander_vel_x;
+}
+
+double ang_vel() {
+    if (lander_angle &lt; MIN_ANGLE)
+        return 0;
+    
+    if (lander_angle &gt; MAX_ANGLE)
+        return 0;
+
+    return lander_angle_vel;
+}
+
+double get_positive_or_negative_random(){
+    return random(1) &gt; 0.5 ? -1 : 1;
+}
+
+void init_lander_vel(){
+    double random_x_vel = random(X_VEL_MAX/2) * get_positive_or_negative_random();
+    double random_y_vel = random(Y_VEL_MAX/2) * get_positive_or_negative_random();
+    double random_angle = random(MAX_ANGLE/4) * get_positive_or_negative_random();
+    double random_angle_vel = random(ANG_VEL_MAX/4) * get_positive_or_negative_random(); 
+      
+    lander_angle_vel = random_angle_vel;
+    lander_angle = random_angle;
+    lander_vel_x = random_x_vel;
+    lander_vel_y = random_y_vel;
+
+    globalState[2] = random_x_vel;
+    globalState[3] = random_y_vel;
+    globalState[4] = random_angle;
+    globalState[5] = random_angle_vel;
+}
+
+
+</declaration>
+	<template>
+		<name x="5" y="5">Agent</name>
+		<declaration>//Clock for agent
+clock t;</declaration>
+		<location id="id0" x="-297" y="0">
+			<name x="-331" y="-34">A</name>
+			<label kind="invariant" x="-374" y="8">t&lt;=1 &amp;&amp;
+t'==50</label>
+		</location>
+		<location id="id1" x="204" y="0">
+			<name x="212" y="-25">B</name>
+			<committed/>
+		</location>
+		<init ref="id0"/>
+		<transition id="id2">
+			<source ref="id1"/>
+			<target ref="id0"/>
+			<label kind="synchronisation" x="-68" y="68">left!</label>
+			<nail x="-51" y="102"/>
+		</transition>
+		<transition id="id3">
+			<source ref="id1"/>
+			<target ref="id0"/>
+			<label kind="synchronisation" x="-68" y="136">right!</label>
+			<nail x="204" y="68"/>
+			<nail x="-51" y="170"/>
+			<nail x="-297" y="76"/>
+		</transition>
+		<transition id="id4">
+			<source ref="id1"/>
+			<target ref="id0"/>
+			<label kind="synchronisation" x="-68" y="-187">main!</label>
+			<nail x="204" y="-68"/>
+			<nail x="-51" y="-170"/>
+			<nail x="-297" y="-59"/>
+		</transition>
+		<transition id="id5">
+			<source ref="id1"/>
+			<target ref="id0"/>
+			<label kind="synchronisation" x="-68" y="-119">free!</label>
+			<nail x="-51" y="-102"/>
+		</transition>
+		<transition id="id6" controllable="false">
+			<source ref="id0"/>
+			<target ref="id1"/>
+			<label kind="guard" x="-93" y="0">t==1</label>
+			<label kind="assignment" x="-51" y="-25">t = 0.0,
+frames = frames+1,
+seconds = frames/50</label>
+		</transition>
+	</template>
+	<template>
+		<name>LunarLander</name>
+		<location id="id7" x="-1002" y="841">
+			<name x="-1020" y="807">Init</name>
+			<committed/>
+		</location>
+		<location id="id8" x="-603" y="841">
+			<name x="-577" y="833">Flying1</name>
+			<label kind="invariant" x="-722" y="858">lander_vel_x' == x_acc() &amp;&amp;
+lander_vel_y' == y_acc() &amp;&amp;
+lander_angle_vel' == ang_acc() &amp;&amp;
+lander_pos_x' == x_vel() &amp;&amp;
+lander_pos_y' == y_vel() &amp;&amp;
+lander_angle' == ang_vel() &amp;&amp;
+cost_shape' == cost_maerke()</label>
+		</location>
+		<location id="id9" x="-603" y="501">
+			<name x="-577" y="484">Flying2</name>
+			<committed/>
+		</location>
+		<location id="id10" x="-603" y="306">
+			<name x="-578" y="298">Ground</name>
+			<label kind="invariant" x="-824" y="323">lander_vel_x' == 0 &amp;&amp;
+lander_vel_y' == 0 &amp;&amp;
+lander_angle_vel' == 0 &amp;&amp;
+lander_pos_x' == 0 &amp;&amp;
+lander_pos_y' == 0 &amp;&amp;
+lander_angle' == 0</label>
+			<committed/>
+		</location>
+		<location id="id11" x="-731" y="161">
+			<name x="-714" y="153">Left</name>
+			<committed/>
+		</location>
+		<location id="id12" x="-646" y="161">
+			<name x="-629" y="153">Right</name>
+			<committed/>
+		</location>
+		<location id="id13" x="-561" y="161">
+			<name x="-544" y="153">Both</name>
+			<committed/>
+		</location>
+		<location id="id14" x="-476" y="161">
+			<name x="-450" y="153">Body</name>
+			<committed/>
+		</location>
+		<location id="id15" x="-603" y="34">
+			<name x="-637" y="0">Terminated</name>
+		</location>
+		<init ref="id7"/>
+		<transition id="id16" controllable="false">
+			<source ref="id14"/>
+			<target ref="id15"/>
+			<label kind="assignment" x="-535" y="76">cost_shape = calc_terminal_cost()</label>
+		</transition>
+		<transition id="id17" controllable="false">
+			<source ref="id13"/>
+			<target ref="id15"/>
+			<label kind="assignment" x="-518" y="93">cost_shape = calc_terminal_cost()</label>
+		</transition>
+		<transition id="id18" controllable="false">
+			<source ref="id11"/>
+			<target ref="id15"/>
+			<label kind="assignment" x="-977" y="85">cost_shape = calc_terminal_cost()</label>
+		</transition>
+		<transition id="id19" controllable="false">
+			<source ref="id12"/>
+			<target ref="id15"/>
+			<label kind="assignment" x="-909" y="68">cost_shape = calc_terminal_cost()</label>
+		</transition>
+		<transition id="id20">
+			<source ref="id10"/>
+			<target ref="id14"/>
+			<label kind="guard" x="-459" y="127">touch == 4</label>
+		</transition>
+		<transition id="id21">
+			<source ref="id10"/>
+			<target ref="id13"/>
+			<label kind="guard" x="-586" y="178">touch == 3</label>
+		</transition>
+		<transition id="id22">
+			<source ref="id10"/>
+			<target ref="id12"/>
+			<label kind="guard" x="-680" y="178">touch == 1</label>
+		</transition>
+		<transition id="id23">
+			<source ref="id10"/>
+			<target ref="id11"/>
+			<label kind="guard" x="-824" y="178">touch == 2</label>
+		</transition>
+		<transition id="id24" controllable="false">
+			<source ref="id9"/>
+			<target ref="id10"/>
+			<label kind="select" x="-586" y="357">e: int[1,4]</label>
+			<label kind="guard" x="-586" y="374">check_ground_contact() == e</label>
+			<label kind="assignment" x="-586" y="391">touch = e,
+update_state()</label>
+		</transition>
+		<transition id="id25">
+			<source ref="id8"/>
+			<target ref="id9"/>
+			<label kind="synchronisation" x="-382" y="595">free?</label>
+			<label kind="assignment" x="-382" y="612">activate_engine(0)</label>
+			<nail x="-390" y="790"/>
+			<nail x="-390" y="544"/>
+		</transition>
+		<transition id="id26">
+			<source ref="id8"/>
+			<target ref="id9"/>
+			<label kind="synchronisation" x="-467" y="595">main?</label>
+			<label kind="assignment" x="-577" y="612">activate_engine(1)</label>
+			<nail x="-416" y="773"/>
+			<nail x="-416" y="561"/>
+		</transition>
+		<transition id="id27">
+			<source ref="id8"/>
+			<target ref="id9"/>
+			<label kind="synchronisation" x="-883" y="595">right?</label>
+			<label kind="assignment" x="-986" y="612">activate_engine(3)</label>
+			<nail x="-824" y="799"/>
+			<nail x="-824" y="544"/>
+		</transition>
+		<transition id="id28">
+			<source ref="id8"/>
+			<target ref="id9"/>
+			<label kind="synchronisation" x="-790" y="595">left?</label>
+			<label kind="assignment" x="-790" y="612">activate_engine(2)</label>
+			<nail x="-798" y="782"/>
+			<nail x="-798" y="561"/>
+		</transition>
+		<transition id="id29">
+			<source ref="id9"/>
+			<target ref="id8"/>
+			<label kind="assignment" x="-629" y="671">flying()</label>
+		</transition>
+		<transition id="id30" controllable="false">
+			<source ref="id7"/>
+			<target ref="id8"/>
+			<label kind="assignment" x="-984" y="841">init_lander_vel()</label>
+		</transition>
+	</template>
+	<system>system Agent, LunarLander;
+</system>
+	<queries>
+		<option key="--split-ks" value="0.5"/>
+		<option key="--max-iterations" value="100"/>
+		<option key="--learning-method" value="4"/>
+		<option key="--indifference-smoothing" value="20"/>
+		<option key="--reset-no-better" value="50"/>
+		<option key="--runs-pr-state" value="200"/>
+		<option key="--random-search-limit" value="0.7"/>
+		<option key="--split-lower-t" value="1.0"/>
+		<option key="--split-filter-rate" value="0.01"/>
+		<option key="--split-upper-t" value="20.0"/>
+		<option key="--total-runs" value="20000"/>
+		<option key="--deterministic-search-limit" value="0.3"/>
+		<option key="--hashtable-size" value="32"/>
+		<option key="--indifference-scale" value="1.0E-4"/>
+		<option key="--max-reset-learning" value="10"/>
+		<option key="--discount" value="0.99"/>
+		<option key="--qlearning-alpha" value="1"/>
+		<option key="--split-filter-val" value="0.95"/>
+		<query>
+			<formula>strategy win = minE(cost_shape)[&lt;=800] {} -&gt; {globalState, lander_pos_x, lander_pos_y, lander_vel_x, lander_vel_y, lander_angle, lander_angle_vel}: &lt;&gt; LunarLander.Terminated</formula>
+			<comment/>
+			<result outcome="success" type="quality" timestamp="2024-05-15 10:30:16 +0200">
+				<option key="--split-ks" value="0.5"/>
+				<option key="--max-iterations" value="100"/>
+				<option key="--learning-method" value="4"/>
+				<option key="--indifference-smoothing" value="20"/>
+				<option key="--reset-no-better" value="50"/>
+				<option key="--runs-pr-state" value="200"/>
+				<option key="--random-search-limit" value="0.7"/>
+				<option key="--split-lower-t" value="1.0"/>
+				<option key="--split-filter-rate" value="0.01"/>
+				<option key="--split-upper-t" value="20.0"/>
+				<option key="--total-runs" value="20000"/>
+				<option key="--deterministic-search-limit" value="0.3"/>
+				<option key="--hashtable-size" value="32"/>
+				<option key="--indifference-scale" value="1.0E-4"/>
+				<option key="--max-reset-learning" value="10"/>
+				<option key="--discount" value="0.99"/>
+				<option key="--qlearning-alpha" value="1"/>
+				<option key="--split-filter-val" value="0.95"/>
+			</result>
+		</query>
+		<query>
+			<formula>E[&lt;=400;400] (max: cost_shape) under win</formula>
+			<comment/>
+			<result outcome="success" type="quantity" value="8887.15 ± 222.214 (95% CI)" timestamp="2024-05-15 10:36:08 +0200">
+				<option key="--split-ks" value="0.5"/>
+				<option key="--max-iterations" value="100"/>
+				<option key="--learning-method" value="4"/>
+				<option key="--indifference-smoothing" value="20"/>
+				<option key="--reset-no-better" value="50"/>
+				<option key="--runs-pr-state" value="200"/>
+				<option key="--random-search-limit" value="0.7"/>
+				<option key="--split-lower-t" value="1.0"/>
+				<option key="--split-filter-rate" value="0.01"/>
+				<option key="--split-upper-t" value="20.0"/>
+				<option key="--total-runs" value="20000"/>
+				<option key="--deterministic-search-limit" value="0.3"/>
+				<option key="--hashtable-size" value="32"/>
+				<option key="--indifference-scale" value="1.0E-4"/>
+				<option key="--max-reset-learning" value="10"/>
+				<option key="--discount" value="0.99"/>
+				<option key="--qlearning-alpha" value="1"/>
+				<option key="--split-filter-val" value="0.95"/>
+				<details>8887.15 ± 222.214 (95% CI)</details>
+				<plot title="Probability Density Distribution" xaxis="max: cost_shape" yaxis="probability density">
+					<series title="density" type="b(543.344579)" color="0x0000ff" encoding="csv">4186.336270923477,1.840452705257398E-5
+4729.680849756403,3.680905410514796E-5
+5273.025428589329,4.6011317631434945E-5
+5816.370007422254,1.5183734818373533E-4
+6359.714586255181,1.5183734818373533E-4
+6903.059165088107,1.5643847994687883E-4
+7446.403743921032,1.794441387625963E-4
+7989.748322753958,1.2423055760487435E-4
+8533.092901586884,1.932475340520268E-4
+9076.43748041981,1.1502829407858737E-4
+9619.782059252735,1.1502829407858737E-4
+10163.126638085661,1.1962942584173087E-4
+10706.471216918588,1.4263508465744835E-4
+11249.815795751514,5.521358115772194E-5
+11793.16037458444,6.901697644715243E-5
+12336.504953417365,6.441584468400892E-5
+12879.849532250291,4.6011317631434945E-5
+13423.194111083218,2.760679057886097E-5
+13966.538689916144,1.840452705257398E-5
+14509.883268749069,9.20226352628699E-6
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">8887.150961744514,0.0
+8887.150961744514,1.932475340520268E-4
+					</series>
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=543.34, bucket count=20
+Runs: 400 in total, 400 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [4186.3, 15053]
+Mean estimate of displayed sample: 8887.2 ± 222.21 (95% CI)</comment>
+				</plot>
+				<plot title="Probability Distribution" xaxis="max: cost_shape" yaxis="probability">
+					<series title="probability" type="b(543.344579)" color="0x0000ff" encoding="csv">4186.336270923477,0.01
+4729.680849756403,0.02
+5273.025428589329,0.025
+5816.370007422254,0.0825
+6359.714586255181,0.0825
+6903.059165088107,0.085
+7446.403743921032,0.0975
+7989.748322753958,0.0675
+8533.092901586884,0.105
+9076.43748041981,0.0625
+9619.782059252735,0.0625
+10163.126638085661,0.065
+10706.471216918588,0.0775
+11249.815795751514,0.03
+11793.16037458444,0.0375
+12336.504953417365,0.035
+12879.849532250291,0.025
+13423.194111083218,0.015
+13966.538689916144,0.01
+14509.883268749069,0.005
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">8887.150961744514,0.0
+8887.150961744514,0.105
+					</series>
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=543.34, bucket count=20
+Runs: 400 in total, 400 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [4186.3, 15053]
+Mean estimate of displayed sample: 8887.2 ± 222.21 (95% CI)</comment>
+				</plot>
+				<plot title="Cumulative Probability Distribution" xaxis="max: cost_shape" yaxis="probability">
+					<series title="cumulative" type="l" color="0x000000" encoding="csv">4186.336270923477,0.0
+4729.680849756403,0.01
+5273.025428589329,0.03
+5816.370007422254,0.055
+6359.714586255181,0.1375
+6903.059165088107,0.22
+7446.403743921032,0.305
+7989.748322753958,0.4025
+8533.092901586884,0.47
+9076.43748041981,0.575
+9619.782059252735,0.6375
+10163.126638085661,0.7
+10706.471216918588,0.765
+11249.815795751514,0.8425
+11793.16037458444,0.8725
+12336.504953417365,0.91
+12879.849532250291,0.945
+13423.194111083218,0.97
+13966.538689916144,0.985
+14509.883268749069,0.995
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">8887.150961744514,0.0
+8887.150961744514,1.0
+					</series>
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=543.34, bucket count=20
+Runs: 400 in total, 400 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [4186.3, 15053]
+Mean estimate of displayed sample: 8887.2 ± 222.21 (95% CI)</comment>
+				</plot>
+				<plot title="Cumulative Probability Confidence Intervals" xaxis="max: cost_shape" yaxis="probability">
+					<series title="upper limit" type="k" color="0x0000dd" encoding="csv">4186.336270923477,0.009179804583665263
+4729.680849756403,0.025404800907336253
+5273.025428589329,0.05181721543058359
+5816.370007422254,0.08208923736452577
+6359.714586255181,0.17518631649322824
+6903.059165088107,0.2638433158275084
+7446.403743921032,0.35269359192234434
+7989.748322753958,0.45238422437042664
+8533.092901586884,0.5202279008010796
+9076.43748041981,0.6239822512451507
+9619.782059252735,0.6846891504869105
+10163.126638085661,0.7445332719046902
+10706.471216918588,0.8057073571113387
+11249.815795751514,0.8768004507642361
+11793.16037458444,0.9035749266956374
+12336.504953417365,0.9361685268073169
+12879.849532250291,0.9652145197962778
+13423.194111083218,0.9844044470001057
+13966.538689916144,0.9944758904954193
+14509.883268749069,0.9993939021906778
+					</series>
+					<series title="lower limit" type="k" color="0xdd0000" encoding="csv">4186.336270923477,0.0
+4729.680849756403,0.002731195971242954
+5273.025428589329,0.01559555299989434
+5816.370007422254,0.03478548020372223
+6359.714586255181,0.10529156826180643
+6903.059165088107,0.18035595725209103
+7446.403743921032,0.2602198329849744
+7989.748322753958,0.3540694390623992
+8533.092901586884,0.4202191288888451
+9076.43748041981,0.5248998335723469
+9619.782059252735,0.5882594811495423
+10163.126638085661,0.6524781209263504
+10706.471216918588,0.7203217752600526
+11249.815795751514,0.8030364924328849
+11793.16037458444,0.8357879415626545
+12336.504953417365,0.8775801131096775
+12879.849532250291,0.9179107626354742
+13423.194111083218,0.9481827845694164
+13966.538689916144,0.9676387055192249
+14509.883268749069,0.9820558553944145
+					</series>
+					<series title="cumulative" type="l" color="0x000000" encoding="csv">4186.336270923477,0.0
+4729.680849756403,0.01
+5273.025428589329,0.03
+5816.370007422254,0.055
+6359.714586255181,0.1375
+6903.059165088107,0.22
+7446.403743921032,0.305
+7989.748322753958,0.4025
+8533.092901586884,0.47
+9076.43748041981,0.575
+9619.782059252735,0.6375
+10163.126638085661,0.7
+10706.471216918588,0.765
+11249.815795751514,0.8425
+11793.16037458444,0.8725
+12336.504953417365,0.91
+12879.849532250291,0.945
+13423.194111083218,0.97
+13966.538689916144,0.985
+14509.883268749069,0.995
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">8887.150961744514,0.0
+8887.150961744514,1.0
+					</series>
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=543.34, bucket count=20
+Runs: 400 in total, 400 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [4186.3, 15053]
+Mean estimate of displayed sample: 8887.2 ± 222.21 (95% CI)</comment>
+				</plot>
+				<plot title="Frequency Histogram" xaxis="max: cost_shape" yaxis="count">
+					<series title="count" type="b(543.344579)" color="0x0000ff" encoding="csv">4186.336270923477,4.0
+4729.680849756403,8.0
+5273.025428589329,10.0
+5816.370007422254,33.0
+6359.714586255181,33.0
+6903.059165088107,34.0
+7446.403743921032,39.0
+7989.748322753958,27.0
+8533.092901586884,42.0
+9076.43748041981,25.0
+9619.782059252735,25.0
+10163.126638085661,26.0
+10706.471216918588,31.0
+11249.815795751514,12.0
+11793.16037458444,15.0
+12336.504953417365,14.0
+12879.849532250291,10.0
+13423.194111083218,6.0
+13966.538689916144,4.0
+14509.883268749069,2.0
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">8887.150961744514,0.0
+8887.150961744514,42.0
+					</series>
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=543.34, bucket count=20
+Runs: 400 in total, 400 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [4186.3, 15053]
+Mean estimate of displayed sample: 8887.2 ± 222.21 (95% CI)</comment>
+				</plot>
+			</result>
+		</query>
+	</queries>
+</nta>
