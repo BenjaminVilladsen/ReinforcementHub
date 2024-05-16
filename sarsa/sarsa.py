@@ -1,7 +1,7 @@
 import time
 
 import numpy as np
-import gym
+import gymnasium as gym
 
 from utils import print_episode_stats
 
