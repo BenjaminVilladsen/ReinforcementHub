@@ -9,7 +9,6 @@ broadcast chan left, right, free;
 //Cost 
 clock cost, t, time;
 
-
 //Constants
 const double FORCE = 0.001;
 const double G = 0.0025;
@@ -37,59 +36,53 @@ double clip(double val, double min_val, double max_val) {
     return max(min_val, min(max_val, val));
 }
 
-
-
 //Car properties
-clock vel=0, pos=0;
+hybrid clock vel=0, pos=0;
 eng engine; //  0 = left, 1 = free, 2 = right
 
 
-double acc() {
+double vel_delta() {
     if (vel &lt;= vel_min || vel &gt;= vel_max)
         return 0;
 
-    return (engine -1) * FORCE - cos(3 * pos) * G;
+    return (engine - 1) * FORCE - cos(3 * pos) * G;
 }
 
-double velocity() {
+double pos_delta() {
     if (pos &lt;= pos_min || pos &gt;= pos_max)
         return 0;
 
     return vel;
 }
 
-eng brute_force() {
-    if (time &lt; 30)
-        return 2;
-    else if (time &lt; 70)
-        return 0;
-    else
-        return 2;
-}
-
-
 //Misc
 //Clip all
 void clip_all() {
     pos = clip(pos, pos_min, pos_max);
     vel = clip(vel, vel_min, vel_max);
-}
-
-
-</declaration>
+}</declaration>
 	<template>
 		<name>Agent</name>
 		<location id="id0" x="-229" y="-110">
 			<name x="-280" y="-119">Init</name>
-			<label kind="invariant" x="-238" y="-93">t&lt;=1 &amp;&amp;
+			<label kind="invariant" x="-195" y="-85">t&lt;=1 &amp;&amp;
 t' == 1</label>
 		</location>
 		<location id="id1" x="144" y="-110">
 			<name x="161" y="-119">Control</name>
 			<committed/>
 		</location>
+		<location id="id2" x="144" y="51">
+			<name x="170" y="42">Mojn</name>
+		</location>
 		<init ref="id0"/>
-		<transition id="id2">
+		<transition id="id3" controllable="false">
+			<source ref="id1"/>
+			<target ref="id2"/>
+			<label kind="guard" x="153" y="-59">pos &gt;= WIN_POS &amp;&amp;
+time &gt;= MAX_TIME</label>
+		</transition>
+		<transition id="id4">
 			<source ref="id1"/>
 			<target ref="id0"/>
 			<label kind="synchronisation" x="-68" y="-289">free!</label>
@@ -99,7 +92,7 @@ t' == 1</label>
 			<nail x="-280" y="-195"/>
 			<nail x="-280" y="-144"/>
 		</transition>
-		<transition id="id3">
+		<transition id="id5">
 			<source ref="id1"/>
 			<target ref="id0"/>
 			<label kind="synchronisation" x="-68" y="-238">right!</label>
@@ -107,13 +100,13 @@ t' == 1</label>
 			<nail x="-51" y="-255"/>
 			<nail x="-229" y="-170"/>
 		</transition>
-		<transition id="id4" controllable="false">
+		<transition id="id6" controllable="false">
 			<source ref="id0"/>
 			<target ref="id1"/>
 			<label kind="guard" x="-102" y="-110">t==1</label>
 			<label kind="assignment" x="-34" y="-110">t=0</label>
 		</transition>
-		<transition id="id5">
+		<transition id="id7">
 			<source ref="id1"/>
 			<target ref="id0"/>
 			<label kind="synchronisation" x="-68" y="-178">left!</label>
@@ -122,35 +115,40 @@ t' == 1</label>
 	</template>
 	<template>
 		<name>MountainCar</name>
-		<location id="id6" x="-807" y="76">
+		<location id="id8" x="-807" y="76">
 			<name x="-892" y="68">Initial</name>
 			<committed/>
 		</location>
-		<location id="id7" x="-433" y="76">
+		<location id="id9" x="-433" y="76">
 			<name x="-425" y="85">Driving1</name>
-			<label kind="invariant" x="-493" y="127">pos' == velocity() &amp;&amp;
-vel' == acc()</label>
+			<label kind="invariant" x="-493" y="127">vel' == vel_delta() &amp;&amp;
+pos' == pos_delta()</label>
 		</location>
-		<location id="id8" x="-433" y="-178">
+		<location id="id10" x="-433" y="-178">
 			<name x="-527" y="-187">Driving2</name>
 			<committed/>
 		</location>
-		<location id="id9" x="-433" y="-340">
-			<name x="-518" y="-382">Termination</name>
-			<label kind="invariant" x="-391" y="-374">pos' == 0 &amp;&amp;
+		<location id="id11" x="-433" y="-340">
+			<name x="-442" y="-382">End</name>
+			<label kind="invariant" x="-391" y="-408">pos' == 0 &amp;&amp;
 vel' == 0 &amp;&amp;
 cost' == 0</label>
 		</location>
-		<init ref="id6"/>
-		<transition id="id10" controllable="false">
-			<source ref="id8"/>
-			<target ref="id9"/>
-			<label kind="guard" x="-416" y="-280">pos &gt;= WIN_POS</label>
+		<init ref="id8"/>
+		<transition id="id12" controllable="false">
+			<source ref="id10"/>
+			<target ref="id11"/>
+			<label kind="guard" x="-697" y="-272">time &gt;= MAX_TIME</label>
+			<nail x="-535" y="-263"/>
 		</transition>
-		<transition id="id11">
-			<source ref="id7"/>
-			<target ref="id8"/>
-			<label kind="guard" x="-297" y="-102">false</label>
+		<transition id="id13" controllable="false">
+			<source ref="id10"/>
+			<target ref="id11"/>
+			<label kind="guard" x="-416" y="-306">pos &gt;= WIN_POS</label>
+		</transition>
+		<transition id="id14" controllable="false">
+			<source ref="id9"/>
+			<target ref="id10"/>
 			<label kind="synchronisation" x="-289" y="-76">right?</label>
 			<label kind="assignment" x="-289" y="-59">engine = 2</label>
 			<nail x="-340" y="76"/>
@@ -158,65 +156,64 @@ cost' == 0</label>
 			<nail x="-297" y="-136"/>
 			<nail x="-340" y="-178"/>
 		</transition>
-		<transition id="id12">
-			<source ref="id7"/>
-			<target ref="id8"/>
-			<label kind="guard" x="-382" y="-102">false</label>
+		<transition id="id15" controllable="false">
+			<source ref="id9"/>
+			<target ref="id10"/>
 			<label kind="synchronisation" x="-357" y="-76">free?</label>
-			<label kind="assignment" x="-382" y="-59">engine = 2</label>
+			<label kind="assignment" x="-382" y="-59">engine = 1</label>
 			<nail x="-365" y="17"/>
 			<nail x="-365" y="-136"/>
 		</transition>
-		<transition id="id13">
-			<source ref="id7"/>
-			<target ref="id8"/>
-			<label kind="assignment" x="-705" y="-85">engine = brute_force()</label>
+		<transition id="id16" controllable="false">
+			<source ref="id9"/>
+			<target ref="id10"/>
+			<label kind="synchronisation" x="-595" y="-85">left?</label>
+			<label kind="assignment" x="-595" y="-68">engine = 0</label>
 			<nail x="-501" y="17"/>
 			<nail x="-501" y="-127"/>
 		</transition>
-		<transition id="id14" controllable="false">
-			<source ref="id8"/>
-			<target ref="id7"/>
-			<label kind="guard" x="-493" y="0">pos &lt; WIN_POS</label>
+		<transition id="id17" controllable="false">
+			<source ref="id10"/>
+			<target ref="id9"/>
+			<label kind="guard" x="-493" y="0">pos &lt; WIN_POS &amp;&amp;
+time &lt; MAX_TIME</label>
 			<label kind="assignment" x="-476" y="-17">clip_all()</label>
 		</transition>
-		<transition id="id15" controllable="false">
-			<source ref="id6"/>
-			<target ref="id7"/>
-			<label kind="assignment" x="-765" y="85">pos = -0.4 - random(0.2)</label>
+		<transition id="id18" controllable="false">
+			<source ref="id8"/>
+			<target ref="id9"/>
+			<label kind="assignment" x="-697" y="76">pos = -0.5,
+vel = 0,
+cost = 0,
+time = 0</label>
 		</transition>
 	</template>
 	<system>system MountainCar, Agent;</system>
+	<simulator type="concrete">
+		<plot-widget title="pos">
+			<expression>pos</expression>
+		</plot-widget>
+	</simulator>
 	<queries>
-		<option key="--search-order" value="0"/>
-		<option key="--diagnostic" value="2"/>
 		<query>
-			<formula>E[&lt;=1000;1000] (max: cost) &lt;&gt;MountainCar.Termination</formula>
+			<formula>Pr[&lt;=10000](&lt;&gt; MountainCar.Win) under winQuick</formula>
 			<comment/>
 		</query>
 		<query>
-			<formula>strategy winQuick = minE (cost) [&lt;=200] {} -&gt; {pos, vel}: &lt;&gt; MountainCar.Termination || time &gt;= 200</formula>
+			<formula>strategy winQuick = minE (cost) [&lt;=200] {} -&gt; {pos, vel}: &lt;&gt; time &gt;=200 || MountainCar.End</formula>
 			<comment/>
-			<option key="--search-order" value="1"/>
-			<option key="--diagnostic" value="1"/>
-			<result outcome="success" type="quality" timestamp="2024-05-08 14:12:49 +0200">
-				<option key="--search-order" value="1"/>
-				<option key="--diagnostic" value="1"/>
+			<result outcome="success" type="quality" timestamp="2024-05-13 16:32:48 +0200">
+				<option key="--total-runs" value="1000"/>
+				<option key="--reset-no-better" value="100"/>
 			</result>
 		</query>
 		<query>
-			<formula>strategy winQuick = minE (cost) [&lt;=400]: &lt;&gt; MountainCar.Termination</formula>
+			<formula>E[&lt;=201;1000] (max: cost)</formula>
 			<comment/>
-			<result outcome="success" type="quality" timestamp="2024-05-06 14:25:15 +0200">
-				<option key="--search-order" value="0"/>
-				<option key="--diagnostic" value="2"/>
-			</result>
-		</query>
-		<query>
-			<formula>E[&lt;=200;1000] (max: cost) under winQuick</formula>
-			<comment/>
-			<result outcome="success" type="quantity" value="≈ 200" timestamp="2024-05-08 14:13:06 +0200">
-				<option key="--search-order" value="0"/>
+			<result outcome="success" type="quantity" value="≈ 200" timestamp="2024-05-10 14:15:09 +0200">
+				<option key="--state-representation" value="2"/>
+				<option key="--hashtable-size" value="32"/>
+				<option key="--statespace-consumption" value="2"/>
 				<option key="--diagnostic" value="2"/>
 				<details>≈ 200</details>
 				<plot title="Probability Density Distribution" xaxis="max: cost" yaxis="probability density">
@@ -281,16 +278,82 @@ Mean estimate of displayed sample: ≈ 200</comment>
 			</result>
 		</query>
 		<query>
-			<formula>Pr[&lt;=10000](&lt;&gt; MountainCar.Termination)</formula>
+			<formula>E[&lt;=200;100] (max: cost) under winQuick </formula>
 			<comment/>
-			<result outcome="success" type="interval" value="≤ 0.0499441 (95% CI)" timestamp="2024-05-08 13:46:11 +0200">
-				<option key="--search-order" value="0"/>
-				<option key="--diagnostic" value="2"/>
-				<details>≤ 0.0499441 (95% CI)</details>
+			<result outcome="success" type="quantity" value="≈ 200" timestamp="2024-05-13 16:30:21 +0200">
+				<option key="--total-runs" value="1000"/>
+				<details>≈ 200</details>
+				<plot title="Probability Density Distribution" xaxis="max: cost" yaxis="probability density">
+					<series title="density" type="b(0.000000)" color="0x0000ff" encoding="csv">200.0,4.503599627370496E15
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">200.0,0.0
+200.0,4.503599627370496E15
+					</series>
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=2.2204e-16, bucket count=1
+Runs: 100 in total, 100 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [200, 200]
+Mean estimate of displayed sample: ≈ 200</comment>
+				</plot>
+				<plot title="Probability Distribution" xaxis="max: cost" yaxis="probability">
+					<series title="probability" type="b(0.000000)" color="0x0000ff" encoding="csv">200.0,1.0
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">200.0,0.0
+200.0,1.0
+					</series>
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=2.2204e-16, bucket count=1
+Runs: 100 in total, 100 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [200, 200]
+Mean estimate of displayed sample: ≈ 200</comment>
+				</plot>
+				<plot title="Cumulative Probability Distribution" xaxis="max: cost" yaxis="probability">
+					<series title="cumulative" type="l" color="0x000000" encoding="csv">200.0,0.0
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">200.0,0.0
+200.0,1.0
+					</series>
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=2.2204e-16, bucket count=1
+Runs: 100 in total, 100 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [200, 200]
+Mean estimate of displayed sample: ≈ 200</comment>
+				</plot>
+				<plot title="Cumulative Probability Confidence Intervals" xaxis="max: cost" yaxis="probability">
+					<series title="upper limit" type="k" color="0x0000dd" encoding="csv">200.0,0.03621669264517642
+					</series>
+					<series title="lower limit" type="k" color="0xdd0000" encoding="csv">200.0,0.0
+					</series>
+					<series title="cumulative" type="l" color="0x000000" encoding="csv">200.0,0.0
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">200.0,0.0
+200.0,1.0
+					</series>
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=2.2204e-16, bucket count=1
+Runs: 100 in total, 100 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [200, 200]
+Mean estimate of displayed sample: ≈ 200</comment>
+				</plot>
+				<plot title="Frequency Histogram" xaxis="max: cost" yaxis="count">
+					<series title="count" type="b(0.000000)" color="0x0000ff" encoding="csv">200.0,100.0
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">200.0,0.0
+200.0,100.0
+					</series>
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=2.2204e-16, bucket count=1
+Runs: 100 in total, 100 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [200, 200]
+Mean estimate of displayed sample: ≈ 200</comment>
+				</plot>
 			</result>
 		</query>
 		<query>
-			<formula/>
+			<formula>simulate [&lt;=200] {MountainCar.Win}</formula>
+			<comment/>
+		</query>
+		<query>
+			<formula>strategy nice = </formula>
+			<comment/>
+		</query>
+		<query>
+			<formula>strategy winQuick = minE (cost) [&lt;=201]: &lt;&gt; MountainCar.End</formula>
 			<comment/>
 		</query>
 	</queries>
