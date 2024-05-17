@@ -3,7 +3,7 @@ import time
 from sarsa import sarsa
 from config import settings_cartpole
 from helpers import cartpole_epsilon_greedy_policy, discretize_state_cartpole, init_cartpole_env, \
-    init_q_cartpole
+    init_q_cartpole, epsilon_soft_policy
 from file_handling import store_policy, load_policy
 from simulate import cartpole_simulation
 from utils import print_text_with_border, plot_rewards, print_episode_stats, print_stats_lander
@@ -20,7 +20,7 @@ def main():
     if choice == 't':
         print_text_with_border("TRAIN MODEL", px=40, py=0)
         Q, episode_rewards = sarsa(
-            epsilon_greedy_policy_fn=cartpole_epsilon_greedy_policy,
+            epsilon_greedy_policy_fn=epsilon_soft_policy,
             discretize_fn=discretize_state_cartpole,
             q_table=Q,
             env=env,
@@ -43,7 +43,7 @@ def main():
         loaded_settings['num_episodes'] = episodes_num
         Q[:] = loaded_q
         Q_trained, episode_rewards = sarsa(
-            epsilon_greedy_policy_fn=cartpole_epsilon_greedy_policy,
+            epsilon_greedy_policy_fn=epsilon_soft_policy,
             discretize_fn=discretize_state_cartpole,
             q_table=Q,
             env=env,

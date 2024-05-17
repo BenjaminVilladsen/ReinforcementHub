@@ -43,8 +43,9 @@ settings_cartpole = {
     "num_episodes": 100_000,
     "log_interval": 1_000,
     "state_bounds": state_bounds_cartpole,
-    "convergence_threshold": 0.005,
-    "success_threshold": 200  # Adjust based on the specific CartPole version
+    "convergence_threshold": 0.00001,
+    "success_threshold": 200,  # Adjust based on the specific CartPole version
+    "convergence_count_limit": 50,
 }
 
 
