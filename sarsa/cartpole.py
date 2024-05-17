@@ -6,7 +6,7 @@ from helpers import cartpole_epsilon_greedy_policy, discretize_state_cartpole, i
     init_q_cartpole
 from file_handling import store_policy, load_policy
 from simulate import cartpole_simulation
-from utils import print_text_with_border, plot_rewards, print_episode_stats
+from utils import print_text_with_border, plot_rewards, print_episode_stats, print_stats_lander
 import numpy as np
 
 
@@ -26,7 +26,7 @@ def main():
             env=env,
             settings=settings_cartpole,
             bins=bins,
-            print_fn=print_episode_stats
+            print_fn=print_stats_lander
         )
 
         filename = f"cp_best_policy_{np.mean(episode_rewards)}_{time.strftime('%Y%m%d-%H%M%S')}.pkl"
@@ -49,7 +49,7 @@ def main():
             env=env,
             settings=settings_cartpole,
             bins=bins,
-            print_fn=print_episode_stats
+            print_fn=print_stats_lander
         )
         Q = Q_trained
         filename = f"cp_updated_best_policy_{np.mean(episode_rewards)}_{time.strftime('%Y%m%d-%H%M%S')}.pkl"
