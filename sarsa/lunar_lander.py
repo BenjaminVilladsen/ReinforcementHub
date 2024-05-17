@@ -9,6 +9,7 @@ from utils import print_text_with_border, plot_rewards, print_episode_stats, pri
 import numpy as np
 
 
+
 def main():
     env = init_lander_env()
     Q, bins = init_q(env=env, settings=settings_lander)
