@@ -2,11 +2,22 @@ import time
 
 import numpy as np
 import gymnasium as gym
+import signal
 
+from file_handling import store_policy
 from utils import print_episode_stats, print_text_with_border
 
 
 def sarsa(epsilon_greedy_policy_fn, discretize_fn, print_fn, q_table, env, settings, bins, epsilon_decay=True):
+    def save_policy_on_interrupt(signum, frame):
+        filename = f"interrupt_policy_{np.mean(episode_rewards)}_{time.strftime('%Y%m%d-%H%M%S')}.pkl"
+        store_policy(filename, q_table, settings)
+        print(f"\nPolicy saved to {filename} on interrupt.")
+        print_text_with_border("Exiting on user interrupt.", px=40, py=0)
+        exit(0)
+
+    # Set up the signal handler
+    signal.signal(signal.SIGINT, save_policy_on_interrupt)
 
     success_count = 0
     convergence_count = 0
