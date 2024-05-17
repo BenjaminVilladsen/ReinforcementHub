@@ -53,6 +53,7 @@ def print_episode_stats(episode_rewards, i_episode, episode_span=100):
 def print_stats_lander(epsiode_rewards, title, settings, convergence_count, success_count, time_elapsed):
     console = Console()
     table = Table(title=f"Episode {title}", title_style="bold blue", show_header=True, header_style="bold magenta")
+    table.add_column("Context", style="dim")
     table.add_column("Time elapsed", style="dim")
     table.add_column("Reward mean", style="dim")
     table.add_column("+- std deviation", style="dim")
@@ -67,7 +68,16 @@ def print_stats_lander(epsiode_rewards, title, settings, convergence_count, succ
     best = np.max(epsiode_rewards)
     worst = np.min(epsiode_rewards)
 
+    # recent epsiodes
+    interval = settings['log_interval']
+    r_reward_mean = np.mean(epsiode_rewards[-interval:])
+    r_plus_minus_std_deviation = np.std(epsiode_rewards[-interval:])
+    r_best = np.max(epsiode_rewards[-interval:])
+    r_worst = np.min(epsiode_rewards[-interval:])
+    r_success_count = len([r for r in epsiode_rewards[-interval:] if r >= 200])
+
     table.add_row(
+        "Overall",
         f"{time_elapsed:.2f} Seconds",
         f"{reward_mean:.2f}",
         f"{plus_minus_std_deviation:.2f}",
@@ -75,6 +85,16 @@ def print_stats_lander(epsiode_rewards, title, settings, convergence_count, succ
         f"{success_count}/{settings['num_episodes']}",
         f"{best:.2f}",
         f"{worst:.2f}",
+    )
+    table.add_row(
+        f"Recent {settings['log_interval']}",
+        f"{time_elapsed:.2f} Seconds",
+        f"{r_reward_mean:.2f}",
+        f"{r_plus_minus_std_deviation:.2f}",
+        str(convergence_count),
+        f"{r_success_count}/{settings['log_interval']}",
+        f"{r_best:.2f}",
+        f"{r_worst:.2f}",
     )
     console.print(table)
 

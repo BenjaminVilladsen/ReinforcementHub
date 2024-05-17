@@ -9,6 +9,18 @@ def init_lander_env():
 def epsilon_greedy_policy(state, epsilon, env, q_table):
     return np.random.choice(env.action_space.n) if np.random.rand() < epsilon else np.argmax(q_table[state])
 
+def epsilon_soft_policy(state, epsilon, env, q_table):
+    """
+    Epsilon-soft policy: with probability epsilon, select a random action,
+    otherwise select the action with the highest Q-value (greedy action).
+    """
+    if np.random.rand() < epsilon:
+        return np.random.choice(env.action_space.n)
+    action_probabilities = np.ones(env.action_space.n, dtype=float) * epsilon / env.action_space.n
+    best_action = np.argmax(q_table[state])
+    action_probabilities[best_action] += (1.0 - epsilon)
+    return np.random.choice(np.arange(len(action_probabilities)), p=action_probabilities)
+
 
 def init_q(env, settings):
     # Initialize the Q-table

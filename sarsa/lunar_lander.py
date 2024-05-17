@@ -2,7 +2,7 @@ import time
 
 from sarsa import sarsa
 from config import settings_lander
-from helpers import epsilon_greedy_policy, discretize_state, init_q, init_lander_env
+from helpers import epsilon_greedy_policy, discretize_state, init_q, init_lander_env, epsilon_soft_policy
 from file_handling import store_policy, load_policy
 from simulate import lander_simulation
 from utils import print_text_with_border, plot_rewards, print_episode_stats, print_stats_lander
@@ -19,7 +19,8 @@ def main():
     if choice == 't':
         print_text_with_border("TRAIN MODEL", px=40, py=0)
         Q, episode_rewards = sarsa(
-            epsilon_greedy_policy_fn=epsilon_greedy_policy,
+            #epsilon_greedy_policy_fn=epsilon_greedy_policy,
+            epsilon_greedy_policy_fn=epsilon_soft_policy,
             discretize_fn=discretize_state,
             q_table=Q,
             env=env,

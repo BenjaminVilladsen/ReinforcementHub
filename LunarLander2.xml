@@ -532,10 +532,6 @@ update_state()</label>
 		<query>
 			<formula>strategy win = minE(cost_shape)[&lt;=800] {} -&gt; {main_on, left_on, right_on, lander_pos_x, cost_shape, lander_pos_y, lander_vel_x, lander_vel_y, lander_angle, lander_angle_vel, touch, globalState[0], globalState[1],globalState[2],globalState[3],globalState[4],globalState[5]}: &lt;&gt; LunarLander.Terminated</formula>
 			<comment/>
-			<result outcome="success" type="quality" timestamp="2024-05-16 13:53:54 +0200">
-				<option key="--hashtable-size" value="32"/>
-				<option key="--learning-method" value="4"/>
-			</result>
 		</query>
 		<query>
 			<formula>E[&lt;=400;400] (max: cost_shape) under win</formula>

@@ -6,17 +6,18 @@ state_bounds_cartpole = [(-2.4, 2.4), (-float("inf"), float("inf")), (-0.2095, 0
 
 
 settings_lander = {
-    "alpha": 0.1,
+    "alpha": 0.15,
     "gamma": 0.9,
-    "epsilon": 1,  # You might also consider an epsilon decay strategy here
+    "epsilon": 0.9,
     "epsilon_decay": 0.99995,
     "epsilon_min": 0.01,
     "num_bins": 20,
-    "num_episodes": 20_000,
+    "num_episodes": 50_000,
     "log_interval": 1_000,
     "state_bounds": state_bounds_lander,
-    "convergence_threshold": 0.01,
-    "success_threshold": 200
+    "convergence_threshold": 0.00001,
+    "success_threshold": 200,
+    "convergence_count_limit": 5,
 }
 settings_car = {
     "alpha": 0.1,

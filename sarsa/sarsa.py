@@ -3,10 +3,10 @@ import time
 import numpy as np
 import gymnasium as gym
 
-from utils import print_episode_stats
+from utils import print_episode_stats, print_text_with_border
 
 
-def sarsa(epsilon_greedy_policy_fn, discretize_fn, print_fn, q_table, env, settings, bins):
+def sarsa(epsilon_greedy_policy_fn, discretize_fn, print_fn, q_table, env, settings, bins, epsilon_decay=True):
 
     success_count = 0
     convergence_count = 0
@@ -42,13 +42,14 @@ def sarsa(epsilon_greedy_policy_fn, discretize_fn, print_fn, q_table, env, setti
 
         episode_rewards.append(episode_reward)
 
-        #update current average
-        curr_avg = np.mean(episode_rewards)
-        # Check convergence criteria
+
+        curr_avg = np.mean(episode_rewards) #update current average
+
         if abs(curr_avg - prev_avg) < settings['convergence_threshold']:
             convergence_count += 1
+        else:
+            convergence_count = 0 #reset convergence count if no convergence. We want consequitive convergence
         prev_avg = curr_avg
-
 
         # Check success criteria
         if done and episode_reward >= settings['success_threshold']:
@@ -56,12 +57,21 @@ def sarsa(epsilon_greedy_policy_fn, discretize_fn, print_fn, q_table, env, setti
 
         if episode % settings['log_interval'] == 0 and episode > 0:
             # print average reward the most recent 100 episodes
-
             print_fn(episode_rewards, title=episode, settings=settings, convergence_count=convergence_count, success_count=success_count, time_elapsed=time.time() - start_time)
             print("Epsilon: ", current_epsilon)
 
         #Update current epsilon
-        current_epsilon = max(settings['epsilon_min'], current_epsilon * settings['epsilon_decay'])
+        if epsilon_decay:
+            current_epsilon = max(settings['epsilon_min'], current_epsilon * settings['epsilon_decay'])
+
+        if convergence_count >= settings['convergence_count_limit']:
+            print_text_with_border("Convergence reached!", px=40, py=1)
+            print("Exiting training loop.")
+            title = f"Convergence at episode: {episode}"
+            print_fn(episode_rewards, title=title, settings=settings, convergence_count=convergence_count,
+                     success_count=success_count, time_elapsed=time.time() - start_time)
+            print("Epsilon: ", current_epsilon)
+            break
 
     env.close()
     return q_table, episode_rewards
