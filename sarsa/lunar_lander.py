@@ -21,7 +21,7 @@ def main():
         print_text_with_border("TRAIN MODEL", px=40, py=0)
         Q, episode_rewards = sarsa(
             #epsilon_greedy_policy_fn=epsilon_greedy_policy,
-            epsilon_greedy_policy_fn=epsilon_soft_policy,
+            epsilon_greedy_policy_fn=epsilon_greedy_policy,
             discretize_fn=discretize_state,
             q_table=Q,
             env=env,
@@ -48,9 +48,9 @@ def main():
             discretize_fn=discretize_state,
             q_table=Q,
             env=env,
-            settings=settings_lander,
+            settings=loaded_settings,
             bins=bins,
-            print_fn=print_episode_stats
+            print_fn=print_stats_lander
         )
         Q = Q_trained
         filename = f"ll_updated_best_policy_{np.mean(episode_rewards)}_{time.strftime('%Y%m%d-%H%M%S')}.pkl"
