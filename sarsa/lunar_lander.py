@@ -1,5 +1,7 @@
 import time
 
+from playsound import playsound
+
 from sarsa import sarsa
 from config import settings_lander
 from helpers import epsilon_greedy_policy, discretize_state, init_q, init_lander_env, epsilon_soft_policy
@@ -33,8 +35,9 @@ def main():
         filename = f"ll_best_policy_{np.mean(episode_rewards)}_{time.strftime('%Y%m%d-%H%M%S')}.pkl"
         store_policy(filename, Q, settings_lander)
 
+        playsound("sound.mp3")
         #plot rewards
-        plot_rewards(episode_rewards)
+        #plot_rewards(episode_rewards)
 
     elif choice == 'lt':
         print_text_with_border("LOAD AND TRAIN", px=40, py=0)
@@ -73,6 +76,8 @@ def main():
         lander_simulation(Q)
     else:
         print_text_with_border("EXITING", px=40, py=0)
+
+
 
 
 

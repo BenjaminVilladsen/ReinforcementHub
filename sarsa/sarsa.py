@@ -57,8 +57,10 @@ def sarsa(epsilon_greedy_policy_fn, discretize_fn, print_fn, q_table, env, setti
 
 
         curr_avg = np.mean(episode_rewards) #update current average
+        avg_diff = abs(curr_avg) - abs(prev_avg)
 
-        if abs(curr_avg - prev_avg) < settings['convergence_threshold']:
+        if abs(avg_diff) < settings['convergence_threshold']:
+
             convergence_count += 1
         else:
             convergence_count = 0 #reset convergence count if no convergence. We want consequitive convergence
