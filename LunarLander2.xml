@@ -123,12 +123,6 @@ void clip_all() {
 void flying() {
     clip_all();
     update_state();
-    if(left_on){
-        lander_angle_vel = lander_angle_vel + SIDE_ENGINE_POWER * SIDE_ENGINE_HEIGHT / MOI;
-}
-    if(right_on){
-        lander_angle_vel = lander_angle_vel - SIDE_ENGINE_POWER * SIDE_ENGINE_HEIGHT / MOI;
-}
 }
 
 //Function for activating a specific engine
@@ -527,8 +521,8 @@ update_state()</label>
 	<system>system Agent, LunarLander;
 </system>
 	<queries>
-		<option key="--learning-method" value="4"/>
 		<option key="--hashtable-size" value="32"/>
+		<option key="--learning-method" value="4"/>
 		<query>
 			<formula>strategy win = minE(cost_shape)[&lt;=2000] {} -&gt; {globalState[0], globalState[1],globalState[2],globalState[3],globalState[4],globalState[5]}: &lt;&gt; LunarLander.Terminated</formula>
 			<comment/>
