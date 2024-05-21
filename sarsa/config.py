@@ -8,7 +8,7 @@ state_bounds_cartpole = [(-2.4, 2.4), (-float("inf"), float("inf")), (-0.2095, 0
 settings_lander = {
     "alpha": 0.003,
     "gamma": 0.9,
-    "epsilon": 0.9,
+    "epsilon": 0.1,
     "epsilon_decay": 0.99995,
     "epsilon_min": 0.01,
     "num_bins": 20,
