@@ -127,8 +127,6 @@ bool inner_point() {
     return (y1 &lt;= GROUND_LEVEL) || (y2 &lt;= GROUND_LEVEL);
 }
 
-double penis;
-
 double lander_angle_ground(int leg, bool inner){
     //1 = right, 2 = left
 
