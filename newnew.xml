@@ -1,0 +1,362 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.6//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_6.dtd'>
+<nta>
+	<declaration>
+//Channels for the agent to emit
+broadcast chan left, right, main, free;
+
+//Engine statuses
+bool main_on=false, left_on=false, right_on=false;
+
+double frames = 0;
+double seconds = 0.0;
+
+// State variables
+double x = 0.0, y = 1.0; // Position
+double vx = 0.0, vy = 0.0; // Velocity
+double theta = 0.0, vtheta = 0.0; // Angle and angular velocity
+bool leg1_contact = false, leg2_contact = false; // Leg contacts
+
+// Constants
+const double g = -9.81; // Gravity
+const double main_thrust = 10.0; // Main engine thrust
+const double side_thrust = 1.0; // Side engine thrust
+const double max_v = 5.0; // Max vertical velocity
+const double max_h = 5.0; // Max horizontal velocity
+const double max_theta = 3.14; // Max angle (180 degrees)
+const double max_vtheta = 1.0; // Max angular velocity
+const double landing_y = 0.0; // Ground level
+
+double cost = 0;
+	</declaration>
+	<template>
+		<name x="5" y="5">Agent</name>
+		<declaration>
+			//Clock for agent
+			clock t;
+		</declaration>
+		<location id="id0" x="-297" y="0">
+			<name x="-331" y="-34">A</name>
+			<label kind="invariant" x="-374" y="8">t&lt;=1 &amp;&amp; t'==50</label>
+		</location>
+		<location id="id1" x="204" y="0">
+			<name x="212" y="-25">B</name>
+			<committed/>
+		</location>
+		<init ref="id0"/>
+		<transition id="id2">
+			<source ref="id1"/>
+			<target ref="id0"/>
+			<label kind="synchronisation" x="-68" y="68">left!</label>
+			<nail x="-51" y="102"/>
+		</transition>
+		<transition id="id3">
+			<source ref="id1"/>
+			<target ref="id0"/>
+			<label kind="synchronisation" x="-68" y="136">right!</label>
+			<nail x="204" y="68"/>
+			<nail x="-51" y="170"/>
+			<nail x="-297" y="76"/>
+		</transition>
+		<transition id="id4">
+			<source ref="id1"/>
+			<target ref="id0"/>
+			<label kind="synchronisation" x="-68" y="-187">main!</label>
+			<nail x="204" y="-68"/>
+			<nail x="-51" y="-170"/>
+			<nail x="-297" y="-59"/>
+		</transition>
+		<transition id="id5">
+			<source ref="id1"/>
+			<target ref="id0"/>
+			<label kind="synchronisation" x="-68" y="-119">free!</label>
+			<nail x="-51" y="-102"/>
+		</transition>
+		<transition id="id6" controllable="false">
+			<source ref="id0"/>
+			<target ref="id1"/>
+			<label kind="guard" x="-136" y="-25">t==1</label>
+			<label kind="assignment" x="-93" y="-68">t = 0.0, frames = frames+1, seconds = frames/50</label>
+		</transition>
+	</template>
+	<template>
+		<name>LunarLander</name>
+		<declaration>// Clock for physics updates
+clock pt;
+		</declaration>
+		<location id="id7" x="-85" y="-595">
+			<name x="-93" y="-631">Flying</name>
+			<label kind="invariant" x="-100" y="-613">pt &lt;= 0.1</label>
+		</location>
+		<location id="id8" x="-382" y="450">
+			<name x="-374" y="425">Landed</name>
+		</location>
+		<location id="id9" x="42" y="459">
+			<name x="50" y="434">Crashed</name>
+		</location>
+		<init ref="id7"/>
+		<transition id="id10">
+			<source ref="id7"/>
+			<target ref="id7"/>
+			<label kind="guard" x="-238" y="-561">pt == 0.1</label>
+			<label kind="assignment" x="-255" y="-510">pt = 0,
+// Update vertical velocity
+vy = vy + g * 0.1 + (main_on ? main_thrust * 0.1 : 0.0),
+// Update horizontal velocity
+vx = vx + (left_on ? side_thrust * 0.1 : 0.0) - (right_on ? side_thrust * 0.1 : 0.0),
+// Update positions
+x = x + vx * 0.1,
+y = y + vy * 0.1,
+// Update angle and angular velocity
+vtheta = vtheta + (left_on ? -side_thrust * 0.1 : 0.0) + (right_on ? side_thrust * 0.1 : 0.0),
+theta = theta + vtheta * 0.1,
+// Clamp values
+vy = (vy &gt; max_v) ? max_v : (vy &lt; -max_v) ? -max_v : vy,
+vx = (vx &gt; max_h) ? max_h : (vx &lt; -max_h) ? -max_h : vx,
+vtheta = (vtheta &gt; max_vtheta) ? max_vtheta : (vtheta &lt; -max_vtheta) ? -max_vtheta : vtheta,
+theta = (theta &gt; max_theta) ? max_theta : (theta &lt; -max_theta) ? -max_theta : theta,
+// Update cost
+cost = cost + (main_on ? 1.0 : 0.0) + (left_on ? 0.5 : 0.0) + (right_on ? 0.5 : 0.0)</label>
+			<nail x="-115" y="-625"/>
+			<nail x="-55" y="-625"/>
+		</transition>
+		<transition id="id11">
+			<source ref="id7"/>
+			<target ref="id8"/>
+			<label kind="guard" x="-654" y="153">y &lt;= landing_y &amp;&amp; vy &lt;= 0.5 &amp;&amp; vx &lt;= 0.5</label>
+			<label kind="assignment" x="5" y="187">vy = 0, vx = 0</label>
+		</transition>
+		<transition id="id12">
+			<source ref="id7"/>
+			<target ref="id9"/>
+			<label kind="guard" x="34" y="238">y &lt;= landing_y &amp;&amp; (vy &gt; 0.5 || vx &gt; 0.5)</label>
+		</transition>
+		<transition id="id13">
+			<source ref="id7"/>
+			<target ref="id7"/>
+			<label kind="synchronisation" x="-238" y="-661">left?</label>
+			<label kind="assignment" x="-252" y="-644">left_on = true, right_on = false, main_on = false</label>
+			<nail x="-115" y="-625"/>
+			<nail x="-55" y="-625"/>
+		</transition>
+		<transition id="id14">
+			<source ref="id7"/>
+			<target ref="id7"/>
+			<label kind="synchronisation" x="-238" y="-631">right?</label>
+			<label kind="assignment" x="-252" y="-614">left_on = false, right_on = true, main_on = false</label>
+			<nail x="-115" y="-625"/>
+			<nail x="-55" y="-625"/>
+		</transition>
+		<transition id="id15">
+			<source ref="id7"/>
+			<target ref="id7"/>
+			<label kind="synchronisation" x="-238" y="-601">main?</label>
+			<label kind="assignment" x="-252" y="-584">left_on = false, right_on = false, main_on = true</label>
+			<nail x="-115" y="-625"/>
+			<nail x="-55" y="-625"/>
+		</transition>
+		<transition id="id16">
+			<source ref="id7"/>
+			<target ref="id7"/>
+			<label kind="synchronisation" x="-238" y="-571">free?</label>
+			<label kind="assignment" x="-252" y="-554">left_on = false, right_on = false, main_on = false</label>
+			<nail x="-115" y="-625"/>
+			<nail x="-55" y="-625"/>
+		</transition>
+	</template>
+	<system>system Agent, LunarLander;
+	</system>
+	<queries>
+		<option key="--hashtable-size" value="32"/>
+		<option key="--learning-method" value="4"/>
+		<query>
+			<formula>strategy win = minE(cost_shape)[&lt;=2000] {} -&gt; {globalState[0], globalState[1],globalState[2],globalState[3],globalState[4],globalState[5]}: &lt;&gt; LunarLander.Terminated</formula>
+			<comment/>
+			<option key="--hashtable-size" value="32"/>
+			<option key="--learning-method" value="4"/>
+			<result outcome="success" type="quality" timestamp="2024-05-17 12:42:36 +0200">
+				<option key="--hashtable-size" value="32"/>
+				<option key="--learning-method" value="4"/>
+			</result>
+		</query>
+		<query>
+			<formula>E[&lt;=400;400] (max: cost_shape) under win</formula>
+			<comment/>
+			<result outcome="success" type="quantity" value="9588.13 ± 277.275 (95% CI)" timestamp="2024-05-17 12:31:04 +0200">
+				<option key="--hashtable-size" value="32"/>
+				<option key="--learning-method" value="4"/>
+				<details>9588.13 ± 277.275 (95% CI)</details>
+				<plot title="Probability Density Distribution" xaxis="max: cost_shape" yaxis="probability density">
+					<series title="density" type="b(739.376328)" color="0x0000ff" encoding="csv">4558.068042711536,2.7049824612370965E-5
+5297.44437089864,1.0481807037293748E-4
+6036.820699085744,1.4539280729149393E-4
+6776.197027272849,9.467438614329838E-5
+7515.573355459952,1.0481807037293748E-4
+8254.949683647057,1.4539280729149393E-4
+8994.32601183416,1.2172421075566935E-4
+9733.702340021264,1.3186789498530844E-4
+10473.078668208369,9.805561421984475E-5
+11212.454996395474,8.114947383711289E-5
+11951.831324582578,8.791192999020563E-5
+12691.20765276968,7.100578960747378E-5
+13430.583980956784,6.0862105377834674E-5
+14169.960309143891,3.381228076546371E-5
+14909.336637330995,6.762456153092741E-6
+15648.712965518098,2.0287368459278222E-5
+16388.0892937052,6.762456153092741E-6
+17127.465621892305,6.762456153092741E-6
+17866.84195007941,0.0
+18606.218278266515,3.3812280765463707E-6
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">9588.12573094188,0.0
+9588.12573094188,1.4539280729149393E-4
+					</series>
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=739.38, bucket count=20
+Runs: 400 in total, 400 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [4558.1, 19346]
+Mean estimate of displayed sample: 9588.1 ± 277.27 (95% CI)</comment>
+				</plot>
+				<plot title="Probability Distribution" xaxis="max: cost_shape" yaxis="probability">
+					<series title="probability" type="b(739.376328)" color="0x0000ff" encoding="csv">4558.068042711536,0.02
+5297.44437089864,0.0775
+6036.820699085744,0.1075
+6776.197027272849,0.07
+7515.573355459952,0.0775
+8254.949683647057,0.1075
+8994.32601183416,0.09
+9733.702340021264,0.0975
+10473.078668208369,0.0725
+11212.454996395474,0.06
+11951.831324582578,0.065
+12691.20765276968,0.0525
+13430.583980956784,0.045
+14169.960309143891,0.025
+14909.336637330995,0.005
+15648.712965518098,0.015
+16388.0892937052,0.005
+17127.465621892305,0.005
+17866.84195007941,0.0
+18606.218278266515,0.0025
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">9588.12573094188,0.0
+9588.12573094188,0.1075
+					</series>
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=739.38, bucket count=20
+Runs: 400 in total, 400 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [4558.1, 19346]
+Mean estimate of displayed sample: 9588.1 ± 277.27 (95% CI)</comment>
+				</plot>
+				<plot title="Cumulative Probability Distribution" xaxis="max: cost_shape" yaxis="probability">
+					<series title="cumulative" type="l" color="0x000000" encoding="csv">4558.068042711536,0.0
+5297.44437089864,0.02
+6036.820699085744,0.0975
+6776.197027272849,0.205
+7515.573355459952,0.275
+8254.949683647057,0.3525
+8994.32601183416,0.46
+9733.702340021264,0.55
+10473.078668208369,0.6475
+11212.454996395474,0.72
+11951.831324582578,0.78
+12691.20765276968,0.845
+13430.583980956784,0.8975
+14169.960309143891,0.9425
+14909.336637330995,0.9675
+15648.712965518098,0.9725
+16388.0892937052,0.9875
+17127.465621892305,0.9925
+17866.84195007941,0.9975
+18606.218278266515,0.9975
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">9588.12573094188,0.0
+9588.12573094188,1.0
+					</series>
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=739.38, bucket count=20
+Runs: 400 in total, 400 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [4558.1, 19346]
+Mean estimate of displayed sample: 9588.1 ± 277.27 (95% CI)</comment>
+				</plot>
+				<plot title="Cumulative Probability Confidence Intervals" xaxis="max: cost_shape" yaxis="probability">
+					<series title="upper limit" type="k" color="0x0000dd" encoding="csv">4558.068042711536,0.009179804583665263
+5297.44437089864,0.03902627671162006
+6036.820699085744,0.130872095432636
+6776.197027272849,0.24793188438704644
+7515.573355459952,0.3215669590834049
+8254.949683647057,0.40152580390120335
+8994.32601183416,0.510234078224028
+9733.702340021264,0.5994754742808273
+10473.078668208369,0.694324795394709
+11212.454996395474,0.7634813240257147
+11951.831324582578,0.8196440427479089
+12691.20765276968,0.8790507223936429
+13430.583980956784,0.9254353049597617
+14169.960309143891,0.9632044804907284
+14909.336637330995,0.9825838539157878
+15648.712965518098,0.9861938697657968
+16388.0892937052,0.9959291641554002
+17127.465621892305,0.9984506410500943
+17866.84195007941,0.9999367074830952
+18606.218278266515,0.9999367074830952
+					</series>
+					<series title="lower limit" type="k" color="0xdd0000" encoding="csv">4558.068042711536,0.0
+5297.44437089864,0.008673170369118308
+6036.820699085744,0.07025356901811508
+6776.197027272849,0.16649669867666425
+7515.573355459952,0.23179825742986981
+8254.949683647057,0.30567520460529096
+8994.32601183416,0.41036198797888174
+9733.702340021264,0.49977939998473253
+10473.078668208369,0.5984741960987966
+11212.454996395474,0.6732288822484923
+11951.831324582578,0.7361566841724916
+12691.20765276968,0.805747095458999
+13430.583980956784,0.8635218804179648
+14169.960309143891,0.9149684047021895
+14909.336637330995,0.9450651832493072
+15648.712965518098,0.9513284510919109
+16388.0892937052,0.9710716562147131
+17127.465621892305,0.9782393314855828
+17866.84195007941,0.9861502300379867
+18606.218278266515,0.9861502300379867
+					</series>
+					<series title="cumulative" type="l" color="0x000000" encoding="csv">4558.068042711536,0.0
+5297.44437089864,0.02
+6036.820699085744,0.0975
+6776.197027272849,0.205
+7515.573355459952,0.275
+8254.949683647057,0.3525
+8994.32601183416,0.46
+9733.702340021264,0.55
+10473.078668208369,0.6475
+11212.454996395474,0.72
+11951.831324582578,0.78
+12691.20765276968,0.845
+13430.583980956784,0.8975
+14169.960309143891,0.9425
+14909.336637330995,0.9675
+15648.712965518098,0.9725
+16388.0892937052,0.9875
+17127.465621892305,0.9925
+17866.84195007941,0.9975
+18606.218278266515,0.9975
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">9588.12573094188,0.0
+9588.12573094188,1.0
+					</series>
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=739.38, bucket count=20
+Runs: 400 in total, 400 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [4558.1, 19346]
+Mean estimate of displayed sample: 9588.1 ± 277.27 (95% CI)</comment>
+				</plot>
+			</result>
+		</query>
+		<query>
+			<formula>saveStrategy("/Users/benjamin/Desktop/myStrategy.json", win)</formula>
+			<comment/>
+			<result outcome="success" type="quality" timestamp="2024-05-17 12:45:22 +0200">
+				<option key="--hashtable-size" value="32"/>
+				<option key="--learning-method" value="4"/>
+			</result>
+		</query>
+	</queries>
+</nta>

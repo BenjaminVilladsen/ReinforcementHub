@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.6//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_6.dtd'>
+<nta>
+	<declaration>
+// Channels for the agent to emit
+broadcast chan left, right, main, free;
+
+// Engine statuses
+bool main_on=false, left_on=false, right_on=false;
+
+double frames = 0;
+double seconds = 0.0;
+
+// Clock for agent
+clock t;
+
+// State variables
+double x = 0.0, y = 2.0; // Position (state[0], state[1])
+double vx = 0.0, vy = 0.0; // Velocity (state[2], state[3])
+double theta = 0.0, vtheta = 0.0; // Angle and angular velocity (state[4], state[5])
+bool leg1_contact = false, leg2_contact = false; // Leg contacts (state[6], state[7])
+
+// Constants
+const double g = -10.0; // Gravity
+const double main_thrust = 13.0; // Main engine thrust
+const double side_thrust = 0.6; // Side engine thrust
+const double max_v = 5.0; // Max vertical velocity
+const double max_h = 5.0; // Max horizontal velocity
+const double max_theta = 4 * 3.14; // Max angle (180 degrees)
+const double max_vtheta = 1.0; // Max angular velocity
+const double landing_y = 0.0; // Ground level
+
+double shaping = 0.0;
+double prev_shaping = 0.0;
+// Cost variable
+double cost = 0.0;
+double reward = 0.0;
+
+int pos_or_neg(){
+    return random(1) &gt; 0.5 ? 1 : -1;
+}
+
+void randomize_initial_state() {
+    // Randomize vx between -2.5 and 2.5
+	vx = random(2.5) * pos_or_neg();
+        
+    // Randomize vy between -2.5 and 2.5
+	vy = random(2.5) * pos_or_neg(); 
+
+    // Randomize theta between -pi/2 and pi/2
+	theta = random(max_theta) * pos_or_neg();
+
+    // Randomize vtheta between -0.5 and 0.5 
+	vtheta = random(0.5) * pos_or_neg();
+}
+
+
+
+void update() {
+			double thrust_x = 0.0;
+			double thrust_y = 0.0;
+
+			if (main_on) {
+				thrust_x = main_thrust * sin(theta) * 0.1;
+				thrust_y = main_thrust * cos(theta) * 0.1;
+			}
+
+			// Update vertical velocity
+			vy = vy + g * 0.1 + thrust_y;
+
+			// Update horizontal velocity
+			vx = vx + thrust_x;
+
+			// Apply side thrusts based on the angle
+			if (left_on) {
+				vx = vx + ( side_thrust * cos(theta) * 0.1);
+				vy = vy + ( side_thrust * sin(theta) * 0.1);
+				vtheta = vtheta - (side_thrust * 0.1); // Rotates counter-clockwise
+			}
+			if (right_on) {
+				vx = vx -( side_thrust * cos(theta) * 0.1);
+				vy = vy - ( side_thrust * sin(theta) * 0.1);
+				vtheta = vtheta + ( side_thrust * 0.1); // Rotates clockwise
+			}
+
+			// Update positions
+			x = x + vx * 0.1;
+			y = y + vy * 0.1;
+
+			// Update angle
+			theta = theta + vtheta * 0.1;
+
+			// Clamp values
+			vy = (vy &gt; max_v) ? max_v : (vy &lt; -max_v) ? -max_v : vy;
+			vx = (vx &gt; max_h) ? max_h : (vx &lt; -max_h) ? -max_h : vx;
+			vtheta = (vtheta &gt; max_vtheta) ? max_vtheta : (vtheta &lt; -max_vtheta) ? -max_vtheta : vtheta;
+			theta = (theta &gt; max_theta) ? max_theta : (theta &lt; -max_theta) ? -max_theta : theta;
+
+			// Reward calculation
+			prev_shaping = shaping;
+			shaping = -100.0 * sqrt(x * x + y * y) - 100.0 * sqrt(vx * vx + vy * vy) - 100.0 * fabs(theta) + 10.0 * leg1_contact + 10.0 * leg2_contact;
+			reward = (frames == 1) ? 0.0 : shaping - prev_shaping;
+			prev_shaping = shaping;
+
+	        // Update cost (negative reward)
+	        cost = reward * -1;
+}
+
+     
+	</declaration>
+	<template>
+		<name x="5" y="5">Agent</name>
+		<declaration>
+		</declaration>
+		<location id="id0" x="-297" y="0">
+			<name x="-331" y="-34">A</name>
+			<label kind="invariant" x="-450" y="0">t&lt;=1 &amp;&amp; t' == 50</label>
+		</location>
+		<location id="id1" x="204" y="0">
+			<name x="212" y="-25">B</name>
+			<committed/>
+		</location>
+		<init ref="id0"/>
+		<transition id="id2">
+			<source ref="id1"/>
+			<target ref="id0"/>
+			<label kind="synchronisation" x="-76" y="68">main!</label>
+			<nail x="-51" y="102"/>
+		</transition>
+		<transition id="id3">
+			<source ref="id1"/>
+			<target ref="id0"/>
+			<label kind="synchronisation" x="-76" y="144">right!</label>
+			<nail x="204" y="68"/>
+			<nail x="-51" y="178"/>
+			<nail x="-297" y="76"/>
+		</transition>
+		<transition id="id4">
+			<source ref="id1"/>
+			<target ref="id0"/>
+			<label kind="synchronisation" x="-76" y="-187">free!</label>
+			<nail x="204" y="-68"/>
+			<nail x="-51" y="-170"/>
+			<nail x="-297" y="-59"/>
+		</transition>
+		<transition id="id5">
+			<source ref="id1"/>
+			<target ref="id0"/>
+			<label kind="synchronisation" x="-76" y="-127">left!</label>
+			<nail x="-51" y="-102"/>
+		</transition>
+		<transition id="id6" controllable="false">
+			<source ref="id0"/>
+			<target ref="id1"/>
+			<label kind="guard" x="-144" y="-25">t==1</label>
+			<label kind="assignment" x="-144" y="8">t = 0.0, frames = frames+1,
+seconds = frames/50</label>
+		</transition>
+	</template>
+	<template>
+		<name>LunarLander</name>
+		<declaration>
+			// Clock for physics updates
+			clock pt;
+		</declaration>
+		<location id="id7" x="212" y="246">
+			<name x="144" y="238">Flying</name>
+		</location>
+		<location id="id8" x="442" y="170">
+			<name x="416" y="127">Landed</name>
+			<label kind="exponentialrate" x="432" y="204">1</label>
+		</location>
+		<location id="id9" x="442" y="348">
+			<name x="416" y="365">Crashed</name>
+			<label kind="exponentialrate" x="432" y="382">1</label>
+		</location>
+		<location id="id10" x="221" y="408">
+			<committed/>
+		</location>
+		<location id="id11" x="212" y="59">
+			<name x="202" y="25">ActionTaken</name>
+			<committed/>
+		</location>
+		<location id="id12" x="697" y="238">
+			<name x="672" y="204">Terminated</name>
+		</location>
+		<init ref="id10"/>
+		<transition id="id13" controllable="false">
+			<source ref="id8"/>
+			<target ref="id12"/>
+			<label kind="assignment" x="518" y="170">reward = reward + 100</label>
+		</transition>
+		<transition id="id14" controllable="false">
+			<source ref="id9"/>
+			<target ref="id12"/>
+			<label kind="assignment" x="527" y="323">reward = reward - 100</label>
+		</transition>
+		<transition id="id15">
+			<source ref="id7"/>
+			<target ref="id11"/>
+			<label kind="synchronisation" x="-289" y="153">free?</label>
+			<label kind="assignment" x="-289" y="170">left_on = false, right_on = false, main_on = false</label>
+			<nail x="178" y="144"/>
+		</transition>
+		<transition id="id16" controllable="false">
+			<source ref="id11"/>
+			<target ref="id7"/>
+			<label kind="assignment" x="93" y="195">update()</label>
+			<nail x="153" y="144"/>
+		</transition>
+		<transition id="id17">
+			<source ref="id7"/>
+			<target ref="id11"/>
+			<label kind="guard" x="212" y="161">y&gt; landing_y</label>
+			<label kind="synchronisation" x="-289" y="93">left?</label>
+			<label kind="assignment" x="-289" y="110">left_on = true, right_on = false, main_on = false</label>
+			<nail x="212" y="144"/>
+		</transition>
+		<transition id="id18">
+			<source ref="id7"/>
+			<target ref="id11"/>
+			<label kind="guard" x="242" y="161">y &gt; landing_y</label>
+			<label kind="synchronisation" x="-297" y="221">main?</label>
+			<label kind="assignment" x="-297" y="238">left_on = false, right_on = false, main_on = true</label>
+			<nail x="272" y="144"/>
+		</transition>
+		<transition id="id19">
+			<source ref="id7"/>
+			<target ref="id11"/>
+			<label kind="guard" x="229" y="161">y&gt; landing_y</label>
+			<label kind="synchronisation" x="-289" y="34">right?</label>
+			<label kind="assignment" x="-289" y="51">left_on = false, right_on = true, main_on = false</label>
+			<nail x="246" y="144"/>
+		</transition>
+		<transition id="id20" controllable="false">
+			<source ref="id10"/>
+			<target ref="id7"/>
+			<label kind="assignment" x="-59" y="340">randomize_initial_state()</label>
+		</transition>
+		<transition id="id21">
+			<source ref="id7"/>
+			<target ref="id8"/>
+			<label kind="guard" x="416" y="34">y &lt;= landing_y &amp;&amp; 
+vy &lt;= 0.5 &amp;&amp; vx &lt;= 0.5 &amp;&amp;
+(theta &lt; -0.3 &amp;&amp; theta &gt; 0.3)</label>
+			<label kind="assignment" x="280" y="68">vy = 0, vx = 0</label>
+		</transition>
+		<transition id="id22">
+			<source ref="id7"/>
+			<target ref="id9"/>
+			<label kind="guard" x="272" y="382">y &lt;= landing_y &amp;&amp; (
+(vy &gt; 0.5 || vx &gt; 0.5) ||
+(theta &gt;= -0.3 &amp;&amp; theta &lt;= 0.3))</label>
+		</transition>
+	</template>
+	<system>system Agent, LunarLander;
+	</system>
+	<queries>
+		<option key="--hashtable-size" value="32"/>
+		<option key="--learning-method" value="4"/>
+		<query>
+			<formula>strategy win = minE (cost) [&lt;=1200] {} -&gt; {x,y, vx, vy, theta, vtheta}: &lt;&gt; LunarLander.Terminated</formula>
+			<comment/>
+			<result outcome="success" type="quality" timestamp="2024-05-21 11:04:10 +0200">
+				<option key="--hashtable-size" value="32"/>
+				<option key="--learning-method" value="4"/>
+			</result>
+		</query>
+		<query>
+			<formula>saveStrategy("/Users/benjamin/Desktop/final_gpt.json", win)</formula>
+			<comment/>
+			<result outcome="success" type="quality" timestamp="2024-05-21 11:04:56 +0200">
+				<option key="--hashtable-size" value="32"/>
+				<option key="--learning-method" value="4"/>
+			</result>
+		</query>
+		<query>
+			<formula/>
+			<comment/>
+		</query>
+	</queries>
+</nta>
