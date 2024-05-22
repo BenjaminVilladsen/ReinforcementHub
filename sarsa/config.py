@@ -25,27 +25,29 @@ settings_car = {
     "epsilon": 1,  # You might also consider an epsilon decay strategy here
     "epsilon_decay": 0.99995,
     "epsilon_min": 0.01,
-    "num_bins": 20,
-    "num_episodes": 10_000,
-    "log_interval": 500,
+    "num_bins": 1000,
+    "num_episodes": 100_000,
+    "log_interval": 1000,
     "state_bounds": state_bounds_car,
-    "convergence_threshold": 0.01,
-    "success_threshold": -150
+    "convergence_threshold": 0.001,
+    "success_threshold": -150,
+    "convergence_count_limit": 30000,
 }
 
 settings_cartpole = {
-    "alpha": 0.05,
-    "gamma": 0.95,
-    "epsilon": 1,  # You might also consider an epsilon decay strategy here
-    "epsilon_decay": 0.99995,
-    "epsilon_min": 0.01,
-    "num_bins": 50,
-    "num_episodes": 100_000,
-    "log_interval": 1_000,
-    "state_bounds": state_bounds_cartpole,
-    "convergence_threshold": 0.00001,
-    "success_threshold": 200,  # Adjust based on the specific CartPole version
-    "convergence_count_limit": 50,
+    "alpha": 0.009,  # Adjusted to be lower, similar to the learning rate used in PPO
+    "gamma": 0.98,  # Same as the gamma in PPO
+    "epsilon": 0.6,  # Initial exploration rate, might need decay
+    "epsilon_decay": 0.99995,  # Adjusted to have a slower decay over a large number of episodes
+    "epsilon_min": 0.1,  # Minimum exploration rate
+    "num_bins": 1100,  # Discretization for state space, remains the same
+    "num_episodes": 100_000,  # Same number of timesteps, converted to episodes
+    "log_interval": 1000,  # Logging interval remains the same
+    "state_bounds": state_bounds_cartpole,  # Boundaries for state space
+    "convergence_threshold": 0.00001,  # Convergence threshold for stopping
+    "success_threshold": 500,  # Maximum score for CartPole-v1
+    "convergence_count_limit": 1_000_000,  # Limit for convergence count
 }
+
 
 

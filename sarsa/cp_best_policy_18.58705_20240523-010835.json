@@ -1,0 +1,1 @@
+{"settings": {"alpha": 0.03, "gamma": 0.98, "epsilon": 0.6, "epsilon_decay": 0.99995, "epsilon_min": 0.1, "num_bins": 20, "num_episodes": 100000, "log_interval": 1000, "state_bounds": [[-2.4, 2.4], [-Infinity, Infinity], [-0.2095, 0.2095], [-Infinity, Infinity]], "convergence_threshold": 1e-05, "success_threshold": 500, "convergence_count_limit": 1000000}}

@@ -1,3 +1,4 @@
+packaging = "sarsa"
 import time
 
 import numpy as np
@@ -33,13 +34,14 @@ def sarsa(epsilon_greedy_policy_fn, discretize_fn, print_fn, q_table, env, setti
         current_state = discretize_fn(initial_state, bins)
         current_action = epsilon_greedy_policy_fn(current_state, settings['epsilon'], env, q_table)
         done = False
+        truncated = False
 
         episode_reward = 0
         t = 0
 
         while not done:
             t += 1
-            next_state_raw, reward, done, _, _ = env.step(current_action)  # Environment step
+            next_state_raw, reward, done, truncated, _ = env.step(current_action)  # Environment step
             episode_reward += reward
             next_state = discretize_fn(next_state_raw, bins)  # Discretize the resulting state
             next_action = epsilon_greedy_policy_fn(next_state,  current_epsilon, env,

@@ -47,7 +47,7 @@ def main():
             discretize_fn=discretize_state_mountaincar,
             q_table=Q,
             env=env,
-            settings=settings_car,
+            settings=loaded_settings,
             bins=bins,
             print_fn=print_episode_stats
         )

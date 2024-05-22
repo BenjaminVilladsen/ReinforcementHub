@@ -354,10 +354,8 @@ Mean estimate of displayed sample: 23.861 ± 0.16877 (95% CI)</comment>
 			</result>
 		</query>
 		<query>
-			<formula>saveStrategy("/Users/christoffervagnlorenzen/Desktop/carl.json", StayAlive)</formula>
+			<formula>saveStrategy("/Users/benjamin/Desktop/experiment_cartpole.json", StayAlive)</formula>
 			<comment/>
-			<result outcome="success" type="quality" timestamp="2024-05-20 17:13:48 +0200">
-			</result>
 		</query>
 		<query>
 			<formula>E[&lt;=10;1000] (max: deaths) under StayAlive</formula>
