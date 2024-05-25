@@ -9,7 +9,7 @@ from file_handling import store_policy
 from utils import print_episode_stats, print_text_with_border
 
 
-def sarsa(epsilon_greedy_policy_fn, discretize_fn, print_fn, q_table, env, settings, bins, epsilon_decay=True):
+def sarsa(epsilon_greedy_policy_fn, discretize_fn, print_fn, q_table, env, settings, bins, modified_reward_fn, epsilon_decay=True):
     def save_policy_on_interrupt(signum, frame):
         filename = f"interrupt_policy_{np.mean(episode_rewards)}_{time.strftime('%Y%m%d-%H%M%S')}.pkl"
         should_save = input(f"\nInterrupt detected. Do you want to save the policy to {filename}? (y/n): ").strip().lower()
@@ -42,7 +42,7 @@ def sarsa(epsilon_greedy_policy_fn, discretize_fn, print_fn, q_table, env, setti
         while not done:
             t += 1
             next_state_raw, reward, done, truncated, _ = env.step(current_action)  # Environment step
-            episode_reward += reward
+            episode_reward += modified_reward_fn(reward, next_state_raw)
             next_state = discretize_fn(next_state_raw, bins)  # Discretize the resulting state
             next_action = epsilon_greedy_policy_fn(next_state,  current_epsilon, env,
                                                    q_table)  # Choose next action using epsilon-greedy

@@ -3,7 +3,7 @@ import time
 from sarsa import sarsa
 from config import settings_cartpole
 from helpers import cartpole_epsilon_greedy_policy, discretize_state_cartpole, init_cartpole_env, \
-    init_q_cartpole, epsilon_soft_policy
+    init_q_cartpole, epsilon_soft_policy, modified_reward_cartpole
 from file_handling import store_policy, load_policy
 from simulate import cartpole_simulation
 from utils import print_text_with_border, plot_rewards, print_episode_stats, print_stats_lander
@@ -26,6 +26,7 @@ def main():
             env=env,
             settings=settings_cartpole,
             bins=bins,
+            modified_reward_fn=modified_reward_cartpole,
             print_fn=print_stats_lander
         )
 
@@ -48,6 +49,7 @@ def main():
             q_table=Q,
             env=env,
             settings=settings_cartpole,
+            modified_reward_fn=modified_reward_cartpole,
             bins=bins,
             print_fn=print_stats_lander
         )

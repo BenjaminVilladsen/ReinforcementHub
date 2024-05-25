@@ -4,7 +4,8 @@ from playsound import playsound
 
 from sarsa import sarsa
 from config import settings_lander
-from helpers import epsilon_greedy_policy, discretize_state, init_q, init_lander_env, epsilon_soft_policy
+from helpers import epsilon_greedy_policy, discretize_state, init_q, init_lander_env, epsilon_soft_policy, \
+    return_reward_no_change
 from file_handling import store_policy, load_policy
 from simulate import lander_simulation
 from utils import print_text_with_border, plot_rewards, print_episode_stats, print_stats_lander
@@ -26,6 +27,7 @@ def main():
             epsilon_greedy_policy_fn=epsilon_greedy_policy,
             discretize_fn=discretize_state,
             q_table=Q,
+            modified_reward_fn=return_reward_no_change,
             env=env,
             settings=settings_lander,
             bins=bins,
@@ -51,6 +53,7 @@ def main():
             discretize_fn=discretize_state,
             q_table=Q,
             env=env,
+            modified_reward_fn=return_reward_no_change,
             settings=loaded_settings,
             bins=bins,
             print_fn=print_stats_lander

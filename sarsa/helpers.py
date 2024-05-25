@@ -2,6 +2,8 @@ import numpy as np
 import gymnasium as gym
 
 
+def return_reward_no_change(reward, state):
+    return reward
 def init_lander_env():
     env = gym.make('LunarLander-v2')
 
@@ -121,7 +123,6 @@ def discretize_state_cartpole(state, bins):
 
     discretized = [int(np.digitize(state[i], bins[i]) - 1) for i in range(4)]
     # Clip the discretized values to be within the valid range
-    discretized = [max(0, min(discretized[i], len(bins[i]) - 2)) for i in range(4)]
     return tuple(discretized)
 
 
@@ -136,3 +137,15 @@ def cartpole_epsilon_greedy_policy(state, epsilon, env, q_table):
         # Ensure that `state` is a tuple of (position_index, velocity_index)
         action = np.argmax(q_table[state[0], state[1], state[2], state[3], :])  # Access all actions for given state
     return action
+
+def modified_reward_cartpole(reward, state):
+    """
+    Modify the reward signal for the CartPole environment.
+    """
+    # Extract the state components
+    position, velocity, angle, angular_velocity = state
+
+    if (angle > -0.2 or angle < 0.2):
+        return -1
+    else:
+        return reward

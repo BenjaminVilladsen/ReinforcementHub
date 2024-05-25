@@ -3,7 +3,7 @@ import time
 from sarsa import sarsa
 from config import settings_lander, settings_car
 from helpers import epsilon_greedy_policy, discretize_state, init_q, init_lander_env, init_mountaincar_env, \
-    init_q_mountaincar, discretize_state_mountaincar, mountain_car_epsilon_greedy_policy
+    init_q_mountaincar, discretize_state_mountaincar, mountain_car_epsilon_greedy_policy, return_reward_no_change
 from file_handling import store_policy, load_policy
 from simulate import lander_simulation, mountain_car_simulation
 from utils import print_text_with_border, plot_rewards, print_episode_stats, print_stats_lander
@@ -25,6 +25,7 @@ def main():
             q_table=Q,
             env=env,
             settings=settings_car,
+            modified_reward_fn=return_reward_no_change,
             bins=bins,
             print_fn=print_stats_lander
         )
@@ -49,7 +50,8 @@ def main():
             env=env,
             settings=loaded_settings,
             bins=bins,
-            print_fn=print_episode_stats
+            print_fn=print_episode_stats,
+            modified_reward_fn=return_reward_no_change
         )
         Q = Q_trained
         filename = f"mc_updated_best_policy_{np.mean(episode_rewards)}_{time.strftime('%Y%m%d-%H%M%S')}.pkl"

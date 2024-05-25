@@ -35,12 +35,12 @@ settings_car = {
 }
 
 settings_cartpole = {
-    "alpha": 0.009,  # Adjusted to be lower, similar to the learning rate used in PPO
+    "alpha": 0.1,  # Adjusted to be lower, similar to the learning rate used in PPO
     "gamma": 0.98,  # Same as the gamma in PPO
-    "epsilon": 0.6,  # Initial exploration rate, might need decay
+    "epsilon": 0.9,  # Initial exploration rate, might need decay
     "epsilon_decay": 0.99995,  # Adjusted to have a slower decay over a large number of episodes
-    "epsilon_min": 0.1,  # Minimum exploration rate
-    "num_bins": 1100,  # Discretization for state space, remains the same
+    "epsilon_min": 0.01,  # Minimum exploration rate
+    "num_bins": 40,  # Discretization for state space, remains the same
     "num_episodes": 100_000,  # Same number of timesteps, converted to episodes
     "log_interval": 1000,  # Logging interval remains the same
     "state_bounds": state_bounds_cartpole,  # Boundaries for state space
