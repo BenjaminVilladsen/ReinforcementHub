@@ -13,7 +13,7 @@ import numpy as np
 def main():
     env = init_cartpole_env()
     Q, bins = init_q_cartpole(env=env, settings=settings_cartpole)
-    print_text_with_border("REINFORCEMENT HUB - CARTPOLE", px=40, py=2)
+    print_text_with_border("REINFORCEMENT - CARTPOLE", px=40, py=2)
     choice = input(
             "What do you want to do? train ('t'), load ('l'), load_and_train ('lt') or grid_search('gs'): ").strip().lower()
 

@@ -16,7 +16,7 @@ import numpy as np
 def main():
     env = init_lander_env()
     Q, bins = init_q(env=env, settings=settings_lander)
-    print_text_with_border("REINFORCEMENT HUB", px=40, py=2)
+    print_text_with_border("REINFORCEMENT", px=40, py=2)
     choice = input(
             "What do you want to do? train ('t'), load ('l'), load_and_train ('lt'): ").strip().lower()
 
