@@ -22,8 +22,6 @@ const double vel_max = 0.07;
 const double vel_min = -0.07;
 
 
-
-
 //Min function
 double min(double a, double b){
     return a &lt; b? a : b;
@@ -43,18 +41,6 @@ double clip(double val, double min_val, double max_val) {
 hybrid clock vel=0, pos=0;
 eng engine; //  0 = left, 1 = free, 2 = right
 
-double mpr = -1.2; //Max pos reached
-double mvr = 0.0; //Max vel reached
-
-void update() {
-    if (pos &gt; mpr)
-        mpr = pos;
-
-    if(fabs(vel) &gt; mvr)
-        mvr = fabs(vel);
-}
-
-
 double vel_delta() {
     if (vel &lt;= vel_min || vel &gt;= vel_max)
         return 0;
@@ -69,7 +55,7 @@ double pos_delta() {
     return vel;
 }
 
-//Misc
+
 //Clip all
 void clip_all() {
     pos = clip(pos, pos_min, pos_max);
@@ -88,17 +74,8 @@ t' == 1</label>
 			<name x="161" y="-119">Control</name>
 			<committed/>
 		</location>
-		<location id="id2" x="144" y="51">
-			<name x="170" y="42">Mojn</name>
-		</location>
 		<init ref="id0"/>
-		<transition id="id3" controllable="false">
-			<source ref="id1"/>
-			<target ref="id2"/>
-			<label kind="guard" x="153" y="-59">pos &gt;= WIN_POS &amp;&amp;
-time &gt;= MAX_TIME</label>
-		</transition>
-		<transition id="id4">
+		<transition id="id2">
 			<source ref="id1"/>
 			<target ref="id0"/>
 			<label kind="synchronisation" x="-68" y="-289">free!</label>
@@ -108,7 +85,7 @@ time &gt;= MAX_TIME</label>
 			<nail x="-280" y="-195"/>
 			<nail x="-280" y="-144"/>
 		</transition>
-		<transition id="id5">
+		<transition id="id3">
 			<source ref="id1"/>
 			<target ref="id0"/>
 			<label kind="synchronisation" x="-68" y="-238">right!</label>
@@ -116,13 +93,13 @@ time &gt;= MAX_TIME</label>
 			<nail x="-51" y="-255"/>
 			<nail x="-229" y="-170"/>
 		</transition>
-		<transition id="id6" controllable="false">
+		<transition id="id4" controllable="false">
 			<source ref="id0"/>
 			<target ref="id1"/>
 			<label kind="guard" x="-102" y="-110">t==1</label>
 			<label kind="assignment" x="-34" y="-110">t=0</label>
 		</transition>
-		<transition id="id7">
+		<transition id="id5">
 			<source ref="id1"/>
 			<target ref="id0"/>
 			<label kind="synchronisation" x="-68" y="-178">left!</label>
@@ -131,40 +108,40 @@ time &gt;= MAX_TIME</label>
 	</template>
 	<template>
 		<name>MountainCar</name>
-		<location id="id8" x="-807" y="76">
+		<location id="id6" x="-807" y="76">
 			<name x="-892" y="68">Initial</name>
 			<committed/>
 		</location>
-		<location id="id9" x="-433" y="76">
+		<location id="id7" x="-433" y="76">
 			<name x="-425" y="85">Driving1</name>
 			<label kind="invariant" x="-493" y="127">vel' == vel_delta() &amp;&amp;
 pos' == pos_delta()</label>
 		</location>
-		<location id="id10" x="-433" y="-178">
+		<location id="id8" x="-433" y="-178">
 			<name x="-527" y="-187">Driving2</name>
 			<committed/>
 		</location>
-		<location id="id11" x="-433" y="-340">
+		<location id="id9" x="-433" y="-340">
 			<name x="-442" y="-382">End</name>
 			<label kind="invariant" x="-391" y="-408">pos' == 0 &amp;&amp;
 vel' == 0 &amp;&amp;
 cost' == 0</label>
 		</location>
-		<init ref="id8"/>
-		<transition id="id12" controllable="false">
-			<source ref="id10"/>
-			<target ref="id11"/>
+		<init ref="id6"/>
+		<transition id="id10" controllable="false">
+			<source ref="id8"/>
+			<target ref="id9"/>
 			<label kind="guard" x="-697" y="-272">time &gt;= MAX_TIME</label>
 			<nail x="-535" y="-263"/>
 		</transition>
-		<transition id="id13" controllable="false">
-			<source ref="id10"/>
-			<target ref="id11"/>
+		<transition id="id11" controllable="false">
+			<source ref="id8"/>
+			<target ref="id9"/>
 			<label kind="guard" x="-416" y="-306">pos &gt;= WIN_POS</label>
 		</transition>
-		<transition id="id14" controllable="false">
-			<source ref="id9"/>
-			<target ref="id10"/>
+		<transition id="id12" controllable="false">
+			<source ref="id7"/>
+			<target ref="id8"/>
 			<label kind="synchronisation" x="-289" y="-76">right?</label>
 			<label kind="assignment" x="-289" y="-59">engine = 2</label>
 			<nail x="-340" y="76"/>
@@ -172,33 +149,32 @@ cost' == 0</label>
 			<nail x="-297" y="-136"/>
 			<nail x="-340" y="-178"/>
 		</transition>
-		<transition id="id15" controllable="false">
-			<source ref="id9"/>
-			<target ref="id10"/>
+		<transition id="id13" controllable="false">
+			<source ref="id7"/>
+			<target ref="id8"/>
 			<label kind="synchronisation" x="-357" y="-76">free?</label>
 			<label kind="assignment" x="-382" y="-59">engine = 1</label>
 			<nail x="-365" y="17"/>
 			<nail x="-365" y="-136"/>
 		</transition>
-		<transition id="id16" controllable="false">
-			<source ref="id9"/>
-			<target ref="id10"/>
+		<transition id="id14" controllable="false">
+			<source ref="id7"/>
+			<target ref="id8"/>
 			<label kind="synchronisation" x="-595" y="-85">left?</label>
 			<label kind="assignment" x="-595" y="-68">engine = 0</label>
 			<nail x="-501" y="17"/>
 			<nail x="-501" y="-127"/>
 		</transition>
-		<transition id="id17" controllable="false">
-			<source ref="id10"/>
-			<target ref="id9"/>
+		<transition id="id15" controllable="false">
+			<source ref="id8"/>
+			<target ref="id7"/>
 			<label kind="guard" x="-501" y="-8">pos &lt; WIN_POS &amp;&amp;
 time &lt; MAX_TIME</label>
-			<label kind="assignment" x="-484" y="-51">clip_all(),
-update()</label>
+			<label kind="assignment" x="-484" y="-51">clip_all()</label>
 		</transition>
-		<transition id="id18" controllable="false">
-			<source ref="id8"/>
-			<target ref="id9"/>
+		<transition id="id16" controllable="false">
+			<source ref="id6"/>
+			<target ref="id7"/>
 			<label kind="assignment" x="-697" y="76">pos = -0.5,
 vel = 0,
 cost = 0,
