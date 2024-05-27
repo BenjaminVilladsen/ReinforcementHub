@@ -1,10 +1,10 @@
 import numpy as np
 
-from experiment.mountaincar.config import e_config_mountaincar
+from config import e_config_mountaincar
 from stratetrees.models import QTree
 import gymnasium as gym
 
-qtree = QTree("/Users/benjamin/Desktop/mountainCar.json")
+qtree = QTree("/Users/benjamin/Desktop/mc_27_05.json")
 
 
 env = gym.make('MountainCar-v0')
@@ -40,6 +40,8 @@ for i in range(e_config_mountaincar['num_episodes']):
     stats["mean_reward"] += total_reward
     if total_reward >= e_config_mountaincar['success_threshold']:
         stats["wins"] += 1
+    if (i%100 == 0):
+        print(f"Episode {i} reward: {total_reward}")
 
 
 stats["mean_reward"] = np.mean(episodes)

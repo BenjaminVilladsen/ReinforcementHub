@@ -4,8 +4,8 @@ from experiment.mountaincar.config import e_config_mountaincar
 from stratetrees.models import QTree
 import gymnasium as gym
 
-qtree = QTree("/Users/benjamin/Desktop/experiment_lunar.json")
-
+#qtree = QTree("/Users/benjamin/Desktop/experiment_lunar.json")
+qtree = QTree("/Users/benjamin/Desktop/lunar_27_05_2.json")
 env = gym.make('LunarLander-v2')
 
 stats = {
